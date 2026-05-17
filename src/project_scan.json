@@ -1,0 +1,679 @@
+{
+    "name": "",
+    "type": "folder",
+    "children": [
+        {
+            "name": "app",
+            "type": "folder",
+            "children": [
+                {
+                    "name": "App.tsx",
+                    "type": "file",
+                    "extension": ".tsx",
+                    "size_mb": 0.0092,
+                    "path": "./app\\App.tsx"
+                },
+                {
+                    "name": "components",
+                    "type": "folder",
+                    "children": [
+                        {
+                            "name": "BottomNav.tsx",
+                            "type": "file",
+                            "extension": ".tsx",
+                            "size_mb": 0.0036,
+                            "path": "./app\\components\\BottomNav.tsx"
+                        },
+                        {
+                            "name": "figma",
+                            "type": "folder",
+                            "children": [
+                                {
+                                    "name": "ImageWithFallback.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0011,
+                                    "path": "./app\\components\\figma\\ImageWithFallback.tsx"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "ui",
+                            "type": "folder",
+                            "children": [
+                                {
+                                    "name": "accordion.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.002,
+                                    "path": "./app\\components\\ui\\accordion.tsx"
+                                },
+                                {
+                                    "name": "alert-dialog.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0037,
+                                    "path": "./app\\components\\ui\\alert-dialog.tsx"
+                                },
+                                {
+                                    "name": "alert.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0015,
+                                    "path": "./app\\components\\ui\\alert.tsx"
+                                },
+                                {
+                                    "name": "aspect-ratio.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0003,
+                                    "path": "./app\\components\\ui\\aspect-ratio.tsx"
+                                },
+                                {
+                                    "name": "avatar.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0011,
+                                    "path": "./app\\components\\ui\\avatar.tsx"
+                                },
+                                {
+                                    "name": "badge.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0016,
+                                    "path": "./app\\components\\ui\\badge.tsx"
+                                },
+                                {
+                                    "name": "breadcrumb.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0023,
+                                    "path": "./app\\components\\ui\\breadcrumb.tsx"
+                                },
+                                {
+                                    "name": "button.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.002,
+                                    "path": "./app\\components\\ui\\button.tsx"
+                                },
+                                {
+                                    "name": "calendar.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0028,
+                                    "path": "./app\\components\\ui\\calendar.tsx"
+                                },
+                                {
+                                    "name": "card.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0019,
+                                    "path": "./app\\components\\ui\\card.tsx"
+                                },
+                                {
+                                    "name": "carousel.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0053,
+                                    "path": "./app\\components\\ui\\carousel.tsx"
+                                },
+                                {
+                                    "name": "chart.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0094,
+                                    "path": "./app\\components\\ui\\chart.tsx"
+                                },
+                                {
+                                    "name": "checkbox.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0012,
+                                    "path": "./app\\components\\ui\\checkbox.tsx"
+                                },
+                                {
+                                    "name": "collapsible.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0008,
+                                    "path": "./app\\components\\ui\\collapsible.tsx"
+                                },
+                                {
+                                    "name": "command.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0044,
+                                    "path": "./app\\components\\ui\\command.tsx"
+                                },
+                                {
+                                    "name": "context-menu.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0079,
+                                    "path": "./app\\components\\ui\\context-menu.tsx"
+                                },
+                                {
+                                    "name": "dialog.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0037,
+                                    "path": "./app\\components\\ui\\dialog.tsx"
+                                },
+                                {
+                                    "name": "drawer.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0039,
+                                    "path": "./app\\components\\ui\\drawer.tsx"
+                                },
+                                {
+                                    "name": "dropdown-menu.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0079,
+                                    "path": "./app\\components\\ui\\dropdown-menu.tsx"
+                                },
+                                {
+                                    "name": "form.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0036,
+                                    "path": "./app\\components\\ui\\form.tsx"
+                                },
+                                {
+                                    "name": "hover-card.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0015,
+                                    "path": "./app\\components\\ui\\hover-card.tsx"
+                                },
+                                {
+                                    "name": "input-otp.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0022,
+                                    "path": "./app\\components\\ui\\input-otp.tsx"
+                                },
+                                {
+                                    "name": "input.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0009,
+                                    "path": "./app\\components\\ui\\input.tsx"
+                                },
+                                {
+                                    "name": "label.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0006,
+                                    "path": "./app\\components\\ui\\label.tsx"
+                                },
+                                {
+                                    "name": "menubar.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.008,
+                                    "path": "./app\\components\\ui\\menubar.tsx"
+                                },
+                                {
+                                    "name": "navigation-menu.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0064,
+                                    "path": "./app\\components\\ui\\navigation-menu.tsx"
+                                },
+                                {
+                                    "name": "pagination.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0026,
+                                    "path": "./app\\components\\ui\\pagination.tsx"
+                                },
+                                {
+                                    "name": "popover.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0016,
+                                    "path": "./app\\components\\ui\\popover.tsx"
+                                },
+                                {
+                                    "name": "progress.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0007,
+                                    "path": "./app\\components\\ui\\progress.tsx"
+                                },
+                                {
+                                    "name": "radio-group.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0014,
+                                    "path": "./app\\components\\ui\\radio-group.tsx"
+                                },
+                                {
+                                    "name": "resizable.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0019,
+                                    "path": "./app\\components\\ui\\resizable.tsx"
+                                },
+                                {
+                                    "name": "scroll-area.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0016,
+                                    "path": "./app\\components\\ui\\scroll-area.tsx"
+                                },
+                                {
+                                    "name": "select.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.006,
+                                    "path": "./app\\components\\ui\\select.tsx"
+                                },
+                                {
+                                    "name": "separator.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0007,
+                                    "path": "./app\\components\\ui\\separator.tsx"
+                                },
+                                {
+                                    "name": "sheet.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0039,
+                                    "path": "./app\\components\\ui\\sheet.tsx"
+                                },
+                                {
+                                    "name": "sidebar.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0207,
+                                    "path": "./app\\components\\ui\\sidebar.tsx"
+                                },
+                                {
+                                    "name": "skeleton.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0003,
+                                    "path": "./app\\components\\ui\\skeleton.tsx"
+                                },
+                                {
+                                    "name": "slider.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0019,
+                                    "path": "./app\\components\\ui\\slider.tsx"
+                                },
+                                {
+                                    "name": "sonner.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0005,
+                                    "path": "./app\\components\\ui\\sonner.tsx"
+                                },
+                                {
+                                    "name": "switch.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0011,
+                                    "path": "./app\\components\\ui\\switch.tsx"
+                                },
+                                {
+                                    "name": "table.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0023,
+                                    "path": "./app\\components\\ui\\table.tsx"
+                                },
+                                {
+                                    "name": "tabs.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0019,
+                                    "path": "./app\\components\\ui\\tabs.tsx"
+                                },
+                                {
+                                    "name": "textarea.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0007,
+                                    "path": "./app\\components\\ui\\textarea.tsx"
+                                },
+                                {
+                                    "name": "toggle-group.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0018,
+                                    "path": "./app\\components\\ui\\toggle-group.tsx"
+                                },
+                                {
+                                    "name": "toggle.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0015,
+                                    "path": "./app\\components\\ui\\toggle.tsx"
+                                },
+                                {
+                                    "name": "tooltip.tsx",
+                                    "type": "file",
+                                    "extension": ".tsx",
+                                    "size_mb": 0.0018,
+                                    "path": "./app\\components\\ui\\tooltip.tsx"
+                                },
+                                {
+                                    "name": "use-mobile.ts",
+                                    "type": "file",
+                                    "extension": ".ts",
+                                    "size_mb": 0.0006,
+                                    "path": "./app\\components\\ui\\use-mobile.ts"
+                                },
+                                {
+                                    "name": "utils.ts",
+                                    "type": "file",
+                                    "extension": ".ts",
+                                    "size_mb": 0.0002,
+                                    "path": "./app\\components\\ui\\utils.ts"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "pages",
+                    "type": "folder",
+                    "children": [
+                        {
+                            "name": "ActivityPage.tsx",
+                            "type": "file",
+                            "extension": ".tsx",
+                            "size_mb": 0.0067,
+                            "path": "./app\\pages\\ActivityPage.tsx"
+                        },
+                        {
+                            "name": "AddDevicePage.tsx",
+                            "type": "file",
+                            "extension": ".tsx",
+                            "size_mb": 0.0075,
+                            "path": "./app\\pages\\AddDevicePage.tsx"
+                        },
+                        {
+                            "name": "Dashboard.tsx",
+                            "type": "file",
+                            "extension": ".tsx",
+                            "size_mb": 0.013,
+                            "path": "./app\\pages\\Dashboard.tsx"
+                        },
+                        {
+                            "name": "DeviceDetailPage.tsx",
+                            "type": "file",
+                            "extension": ".tsx",
+                            "size_mb": 0.0254,
+                            "path": "./app\\pages\\DeviceDetailPage.tsx"
+                        },
+                        {
+                            "name": "DevicesPage.tsx",
+                            "type": "file",
+                            "extension": ".tsx",
+                            "size_mb": 0.0082,
+                            "path": "./app\\pages\\DevicesPage.tsx"
+                        },
+                        {
+                            "name": "LoginPage.tsx",
+                            "type": "file",
+                            "extension": ".tsx",
+                            "size_mb": 0.0067,
+                            "path": "./app\\pages\\LoginPage.tsx"
+                        },
+                        {
+                            "name": "NotificationsPage.tsx",
+                            "type": "file",
+                            "extension": ".tsx",
+                            "size_mb": 0.0083,
+                            "path": "./app\\pages\\NotificationsPage.tsx"
+                        },
+                        {
+                            "name": "OnboardingScreen.tsx",
+                            "type": "file",
+                            "extension": ".tsx",
+                            "size_mb": 0.0033,
+                            "path": "./app\\pages\\OnboardingScreen.tsx"
+                        },
+                        {
+                            "name": "ProfilePage.tsx",
+                            "type": "file",
+                            "extension": ".tsx",
+                            "size_mb": 0.0083,
+                            "path": "./app\\pages\\ProfilePage.tsx"
+                        },
+                        {
+                            "name": "RegisterPage.tsx",
+                            "type": "file",
+                            "extension": ".tsx",
+                            "size_mb": 0.0101,
+                            "path": "./app\\pages\\RegisterPage.tsx"
+                        },
+                        {
+                            "name": "SplashScreen.tsx",
+                            "type": "file",
+                            "extension": ".tsx",
+                            "size_mb": 0.0024,
+                            "path": "./app\\pages\\SplashScreen.tsx"
+                        }
+                    ]
+                },
+                {
+                    "name": "theme-provider.tsx",
+                    "type": "file",
+                    "extension": ".tsx",
+                    "size_mb": 0.0016,
+                    "path": "./app\\theme-provider.tsx"
+                }
+            ]
+        },
+        {
+            "name": "firebase",
+            "type": "folder",
+            "children": [
+                {
+                    "name": "config.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.0011,
+                    "path": "./firebase\\config.ts"
+                }
+            ]
+        },
+        {
+            "name": "hooks",
+            "type": "folder",
+            "children": [
+                {
+                    "name": "useFirebaseActivity.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.0062,
+                    "path": "./hooks\\useFirebaseActivity.ts"
+                },
+                {
+                    "name": "useFirebaseAuth.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.0006,
+                    "path": "./hooks\\useFirebaseAuth.ts"
+                },
+                {
+                    "name": "useFirebaseDevices.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.0024,
+                    "path": "./hooks\\useFirebaseDevices.ts"
+                }
+            ]
+        },
+        {
+            "name": "imports",
+            "type": "folder",
+            "children": [
+                {
+                    "name": "pasted_text",
+                    "type": "folder",
+                    "children": [
+                        {
+                            "name": "iot-security-app-design.md",
+                            "type": "file",
+                            "extension": ".md",
+                            "size_mb": 0.0076,
+                            "path": "./imports\\pasted_text\\iot-security-app-design.md"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "main.py",
+            "type": "file",
+            "extension": ".py",
+            "size_mb": 0.0032,
+            "path": "./main.py"
+        },
+        {
+            "name": "main.tsx",
+            "type": "file",
+            "extension": ".tsx",
+            "size_mb": 0.0013,
+            "path": "./main.tsx"
+        },
+        {
+            "name": "services",
+            "type": "folder",
+            "children": [
+                {
+                    "name": "activityHistoryService.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.0032,
+                    "path": "./services\\activityHistoryService.ts"
+                },
+                {
+                    "name": "alertService.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.0073,
+                    "path": "./services\\alertService.ts"
+                },
+                {
+                    "name": "authService.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.0021,
+                    "path": "./services\\authService.ts"
+                },
+                {
+                    "name": "deviceService.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.009,
+                    "path": "./services\\deviceService.ts"
+                },
+                {
+                    "name": "sensorService.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.0018,
+                    "path": "./services\\sensorService.ts"
+                }
+            ]
+        },
+        {
+            "name": "store",
+            "type": "folder",
+            "children": [
+                {
+                    "name": "deviceStore.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.0003,
+                    "path": "./store\\deviceStore.ts"
+                }
+            ]
+        },
+        {
+            "name": "styles",
+            "type": "folder",
+            "children": [
+                {
+                    "name": "fonts.css",
+                    "type": "file",
+                    "extension": ".css",
+                    "size_mb": 0.0,
+                    "path": "./styles\\fonts.css"
+                },
+                {
+                    "name": "globals.css",
+                    "type": "file",
+                    "extension": ".css",
+                    "size_mb": 0.0,
+                    "path": "./styles\\globals.css"
+                },
+                {
+                    "name": "index.css",
+                    "type": "file",
+                    "extension": ".css",
+                    "size_mb": 0.0001,
+                    "path": "./styles\\index.css"
+                },
+                {
+                    "name": "tailwind.css",
+                    "type": "file",
+                    "extension": ".css",
+                    "size_mb": 0.0001,
+                    "path": "./styles\\tailwind.css"
+                },
+                {
+                    "name": "theme.css",
+                    "type": "file",
+                    "extension": ".css",
+                    "size_mb": 0.0065,
+                    "path": "./styles\\theme.css"
+                }
+            ]
+        },
+        {
+            "name": "types",
+            "type": "folder",
+            "children": [
+                {
+                    "name": "alert.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.0003,
+                    "path": "./types\\alert.ts"
+                },
+                {
+                    "name": "device.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.0016,
+                    "path": "./types\\device.ts"
+                },
+                {
+                    "name": "sensor.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.0002,
+                    "path": "./types\\sensor.ts"
+                }
+            ]
+        },
+        {
+            "name": "vite-env.d.ts",
+            "type": "file",
+            "extension": ".ts",
+            "size_mb": 0.0,
+            "path": "./vite-env.d.ts"
+        }
+    ]
+}

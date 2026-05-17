@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+android/app/build/
+
+# Environment & secrets
+.env
+.env.local
+*.keystore
+
+# Android generated
+android/.gradle/
+android/local.properties
+
+# System files
+.DS_Store
+Thumbs.db

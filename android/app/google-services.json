@@ -1,0 +1,109 @@
+{
+  "project_info": {
+    "project_number": "383764904540",
+    "firebase_url": "https://webdashboardptapt-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "webdashboardptapt",
+    "storage_bucket": "webdashboardptapt.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:383764904540:android:4bb108ec3ec916d1e20499",
+        "android_client_info": {
+          "package_name": "com.adytia.mobilewo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "383764904540-j0o752kc9ughdtmsin54od2m7fcpumf1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.adytia.mobilewo",
+            "certificate_hash": "b161c40123b71039936ebb90aa4470f6edadf3ca"
+          }
+        },
+        {
+          "client_id": "383764904540-qvo1e4vt1c5744b3i09ua77gjf5evff8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyASMVFvxj_DiG17wBL7swOO0ibAtwl98BU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "383764904540-qvo1e4vt1c5744b3i09ua77gjf5evff8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:383764904540:android:e90dd52a755590a5e20499",
+        "android_client_info": {
+          "package_name": "com.deteksimaling.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "383764904540-38k160tnjn1bcele2kh9h4rbntjs2fip.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.deteksimaling.app",
+            "certificate_hash": "748b08a6b2a241254ec0bf603404a61ac94d95f3"
+          }
+        },
+        {
+          "client_id": "383764904540-4fd9sfft986he96v462a5j2sf7c2k8ks.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.deteksimaling.app",
+            "certificate_hash": "94e0616542f922180267921b8554a5f6ab1eed65"
+          }
+        },
+        {
+          "client_id": "383764904540-k2n1fsm0veh1f1gl3i6007ppiv9n057q.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.deteksimaling.app",
+            "certificate_hash": "6e915aca2579d7d07e94298cff579f4ac5e1ef81"
+          }
+        },
+        {
+          "client_id": "383764904540-ln74ukmvo46gctie02614s8dne6epi63.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.deteksimaling.app",
+            "certificate_hash": "cd6b9a1953a24ba2f8f21ed230f48de6585a38b1"
+          }
+        },
+        {
+          "client_id": "383764904540-qvo1e4vt1c5744b3i09ua77gjf5evff8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyASMVFvxj_DiG17wBL7swOO0ibAtwl98BU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "383764904540-qvo1e4vt1c5744b3i09ua77gjf5evff8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
