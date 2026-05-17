@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { toast } from "sonner";
 import { AlertTriangle, Bell, CircleCheckBig, ShieldAlert, X } from "lucide-react";
@@ -26,6 +27,7 @@ import { useFirebaseAuth } from "../hooks/useFirebaseAuth";
 import { useFirebaseDevices } from "../hooks/useFirebaseDevices";
 import { useFirebaseActivity } from "../hooks/useFirebaseActivity";
 import type { ActivityItem } from "../hooks/useFirebaseActivity";
+import { requestNotificationPermission, showAlarmNotification } from '../services/notificationService'
 
 // ✅ Catat waktu app dibuka — hanya alert SETELAH ini yang boleh trigger popup
 const SESSION_START = Date.now();
@@ -46,50 +48,57 @@ function AlarmToastBridge() {
   const [activeAlarm, setActiveAlarm] = useState<AlarmState | null>(null);
 
   useEffect(() => {
-    const nextSeenIds = new Set(seenActivityIds.current);
+      requestNotificationPermission();
+    }, []);
 
-    activities.forEach((activity) => {
-      const isBlockedSensor =
-        activity.type === "sensor" &&
-        activity.title.toLowerCase().includes("blocked");
-      const isCriticalAlert =
-        activity.type === "alert" && activity.severity === "critical";
+    useEffect(() => {
+      const nextSeenIds = new Set(seenActivityIds.current);
 
-      if (!isBlockedSensor && !isCriticalAlert) return;
+      activities.forEach((activity) => {
+        const isBlockedSensor =
+          activity.type === "sensor" &&
+          activity.title.toLowerCase().includes("blocked");
+        const isCriticalAlert =
+          activity.type === "alert" && activity.severity === "critical";
 
-      // ✅ Fix utama: skip alert lama yang ada sebelum app dibuka
-      if (activity.timestamp < SESSION_START) {
-        nextSeenIds.add(activity.id); // tandai sebagai seen agar tidak muncul nanti
-        return;
-      }
+        if (activity.type === "user") return;
+        if (!isBlockedSensor && !isCriticalAlert) return;
+        if (activity.timestamp < SESSION_START) {
+          nextSeenIds.add(activity.id);
+          return;
+        }
+        if (nextSeenIds.has(activity.id)) return;
 
-      if (nextSeenIds.has(activity.id)) return;
+        nextSeenIds.add(activity.id);
 
-      nextSeenIds.add(activity.id);
+        // ← Kirim notifikasi ke notification bar
+        showAlarmNotification(
+          activity.title,
+          `${activity.device} • ${activity.time}`
+        );
 
-      toast.error(activity.title, {
-        description: `${activity.device} • ${activity.time}`,
+        toast.error(activity.title, {
+          description: `${activity.device} • ${activity.time}`,
+        });
+
+        setActiveAlarm((currentAlarm) => {
+          if (currentAlarm?.id === activity.id) return currentAlarm;
+          return {
+            id: activity.id,
+            title: activity.title,
+            device: activity.device,
+            time: activity.time,
+            severity: activity.severity,
+            description:
+              activity.type === "sensor"
+                ? "Laser sensor was blocked. Immediate attention is required."
+                : "Critical intrusion alert was received from Firebase.",
+          };
+        });
       });
 
-      setActiveAlarm((currentAlarm) => {
-        if (currentAlarm?.id === activity.id) return currentAlarm;
-
-        return {
-          id: activity.id,
-          title: activity.title,
-          device: activity.device,
-          time: activity.time,
-          severity: activity.severity,
-          description:
-            activity.type === "sensor"
-              ? "Laser sensor was blocked. Immediate attention is required."
-              : "Critical intrusion alert was received from Firebase.",
-        };
-      });
-    });
-
-    seenActivityIds.current = nextSeenIds;
-  }, [activities]);
+      seenActivityIds.current = nextSeenIds;
+    }, [activities]);
 
   const dismissAlarm = () => {
     if (activeAlarm) {
@@ -163,7 +172,7 @@ function AlarmToastBridge() {
   );
 }
 
-function ProtectedRoute({ children }: { children: JSX.Element }) {
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { loading, isAuthenticated } = useFirebaseAuth();
 
   if (loading) {
