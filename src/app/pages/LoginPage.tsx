@@ -31,18 +31,20 @@ export function LoginPage() {
       navigate("/dashboard");
     } catch (authError) {
       setError(authError instanceof Error ? authError.message : "Unable to sign in.");
+      setLoading(false); // ← pastikan loading false saat error
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
+    if (loading) return; // ← cegah double click
     setError("");
     setLoading(true);
 
     try {
       await GoogleAuth.initialize({
-        clientId: '383764904540-qvo1e4vt1c5744b3i09ua77gjf5evff8.apps.googleusercontent.com',
+        clientId: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com',
         scopes: ['profile', 'email'],
         grantOfflineAccess: true,
       });
@@ -54,9 +56,11 @@ export function LoginPage() {
       await signInWithCredential(auth, credential);
       navigate("/dashboard");
     } catch (authError) {
+      await GoogleAuth.signOut().catch(() => {});
       setError(
         authError instanceof Error ? authError.message : "Google sign-in failed."
       );
+      setLoading(false); // ← pastikan loading false saat error
     } finally {
       setLoading(false);
     }
