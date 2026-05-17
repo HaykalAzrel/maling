@@ -4,8 +4,9 @@ import { Shield, Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { motion } from "motion/react";
 import { GoogleAuth } from "@codetrix-studio/capacitor-google-auth";
 import { auth } from "../../firebase/config";
-import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
+import { GoogleAuthProvider, signInWithCredential, signInWithPopup } from "firebase/auth";
 import { signInWithEmail } from "../../services/authService";
+import { Capacitor } from "@capacitor/core";
 
 export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -38,29 +39,36 @@ export function LoginPage() {
   };
 
   const handleGoogleSignIn = async () => {
-    if (loading) return; // ← cegah double click
-    setError("");
-    setLoading(true);
+  if (loading) return;
+  setError("");
+  setLoading(true);
 
     try {
-      await GoogleAuth.initialize({
-        clientId: '383764904540-qvo1e4vt1c5744b3i09ua77gjf5evff8.apps.googleusercontent.com',
-        scopes: ['profile', 'email'],
-        grantOfflineAccess: true,
-      });
-      const googleUser = await GoogleAuth.signIn();
-      const credential = GoogleAuthProvider.credential(
-        googleUser.authentication.idToken
-      );
-      if (!auth) throw new Error("Auth not initialized");
-      await signInWithCredential(auth, credential);
+      if (Capacitor.isNativePlatform()) {
+        // Native Android/iOS - pakai Capacitor plugin
+        await GoogleAuth.initialize({
+          clientId: '383764904540-qvo1e4vt1c5744b3i09ua77gjf5evff8.apps.googleusercontent.com',
+          scopes: ['profile', 'email'],
+          grantOfflineAccess: true,
+        });
+        const googleUser = await GoogleAuth.signIn();
+        const credential = GoogleAuthProvider.credential(
+          googleUser.authentication.idToken
+        );
+        if (!auth) throw new Error("Auth not initialized");
+        await signInWithCredential(auth, credential);
+      } else {
+        // Web browser - pakai Firebase popup langsung
+        const provider = new GoogleAuthProvider();
+        if (!auth) throw new Error("Auth not initialized");
+        await signInWithPopup(auth, provider);
+      }
       navigate("/dashboard");
     } catch (authError) {
       await GoogleAuth.signOut().catch(() => {});
       setError(
         authError instanceof Error ? authError.message : "Google sign-in failed."
       );
-      setLoading(false); // ← pastikan loading false saat error
     } finally {
       setLoading(false);
     }
