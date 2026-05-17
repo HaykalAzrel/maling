@@ -30,7 +30,12 @@ import type { ActivityItem } from "../hooks/useFirebaseActivity";
 import { requestNotificationPermission, showAlarmNotification } from '../services/notificationService'
 
 // ✅ Catat waktu app dibuka — hanya alert SETELAH ini yang boleh trigger popup
-const SESSION_START = Date.now();
+// Reset SESSION_START setiap kali user berinteraksi
+let SESSION_START = Date.now();
+
+export const refreshSessionStart = () => {
+  SESSION_START = Date.now();
+};
 
 type AlarmState = {
   id: string;
@@ -55,47 +60,36 @@ function AlarmToastBridge() {
       const nextSeenIds = new Set(seenActivityIds.current);
 
       activities.forEach((activity) => {
-        const isBlockedSensor =
-          activity.type === "sensor" &&
-          activity.title.toLowerCase().includes("blocked");
-        const isCriticalAlert =
-          activity.type === "alert" && activity.severity === "critical";
+        // ✅ Skip semua activity selain sensor blocked
+      if (activity.type !== "sensor") return;
+      if (!activity.title.toLowerCase().includes("blocked")) return;
 
-        if (activity.type === "user") return;
-        if (!isBlockedSensor && !isCriticalAlert) return;
-        if (activity.timestamp < SESSION_START) {
-          nextSeenIds.add(activity.id);
-          return;
-        }
-        if (nextSeenIds.has(activity.id)) return;
-
+      // ✅ Skip activity lama sebelum app dibuka
+      if (activity.timestamp < SESSION_START) {
         nextSeenIds.add(activity.id);
+        return;
+      }
 
-        // ← Kirim notifikasi ke notification bar
-        showAlarmNotification(
-          activity.title,
-          `${activity.device} • ${activity.time}`
-        );
+      if (nextSeenIds.has(activity.id)) return;
 
-        toast.error(activity.title, {
-          description: `${activity.device} • ${activity.time}`,
-        });
+      nextSeenIds.add(activity.id);
 
-        setActiveAlarm((currentAlarm) => {
-          if (currentAlarm?.id === activity.id) return currentAlarm;
-          return {
-            id: activity.id,
-            title: activity.title,
-            device: activity.device,
-            time: activity.time,
-            severity: activity.severity,
-            description:
-              activity.type === "sensor"
-                ? "Laser sensor was blocked. Immediate attention is required."
-                : "Critical intrusion alert was received from Firebase.",
-          };
-        });
+      toast.error(activity.title, {
+        description: `${activity.device} • ${activity.time}`,
       });
+
+      setActiveAlarm((currentAlarm) => {
+        if (currentAlarm?.id === activity.id) return currentAlarm;
+        return {
+          id: activity.id,
+          title: activity.title,
+          device: activity.device,
+          time: activity.time,
+          severity: activity.severity,
+          description: "Laser sensor was blocked. Immediate attention is required.",
+        };
+      });
+    });
 
       seenActivityIds.current = nextSeenIds;
     }, [activities]);

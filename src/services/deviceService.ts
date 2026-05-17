@@ -35,7 +35,7 @@ const normalizeDevice = (id: string, record: DeviceRecord): Device => {
     const threshold = record.threshold ?? config.threshold;
 
     // Normalize owner: support both 'owner' (from firmware) and 'ownerId' (from app)
-    const ownerId = record.ownerId ?? record.owner ?? null;
+    const ownerId = record.ownerId ?? record.owner ?? undefined;
 
     return {
         ...record,
