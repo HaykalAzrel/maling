@@ -44,7 +44,7 @@ export function LoginPage() {
 
     try {
       await GoogleAuth.initialize({
-        clientId: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com',
+        clientId: '383764904540-qvo1e4vt1c5744b3i09ua77gjf5evff8.apps.googleusercontent.com',
         scopes: ['profile', 'email'],
         grantOfflineAccess: true,
       });
