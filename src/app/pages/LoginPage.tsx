@@ -41,7 +41,11 @@ export function LoginPage() {
     setLoading(true);
 
     try {
-      await GoogleAuth.initialize();
+      await GoogleAuth.initialize({
+        clientId: '383764904540-qvo1e4vt1c5744b3i09ua77gjf5evff8.apps.googleusercontent.com',
+        scopes: ['profile', 'email'],
+        grantOfflineAccess: true,
+      });
       const googleUser = await GoogleAuth.signIn();
       const credential = GoogleAuthProvider.credential(
         googleUser.authentication.idToken
