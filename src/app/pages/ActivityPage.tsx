@@ -59,15 +59,15 @@ export function ActivityPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="max-w-md mx-auto">
-        <div className="px-6 pt-8 pb-6">
-          <div className="mb-6">
-            <h1 className="text-3xl mb-2">History User & Alat</h1>
+    <div className="min-h-dvh bg-background pb-28 sm:pb-32">
+      <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
+        <div className="py-6 sm:py-8 lg:py-10 space-y-6 lg:space-y-8">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-3xl sm:text-4xl mb-0">History User & Alat</h1>
             <p className="text-muted-foreground">Monitor user actions and device events in one timeline</p>
           </div>
 
-          <div className="relative mb-6">
+          <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <input
               type="text"
@@ -78,7 +78,7 @@ export function ActivityPage() {
             />
           </div>
 
-          <div className="flex gap-2 mb-6 overflow-x-auto">
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0">
             {(["today", "alerts", "devices", "all"] as FilterType[]).map((f) => (
               <button
                 key={f}
@@ -103,7 +103,7 @@ export function ActivityPage() {
               Loading Firebase activity...
             </div>
           ) : filteredActivities.length === 0 ? (
-            <div className="text-center py-16">
+            <div className="text-center py-16 px-4">
               <div className="w-24 h-24 mx-auto mb-6 bg-muted/50 rounded-3xl flex items-center justify-center">
                 <ActivityIcon className="w-12 h-12 text-muted-foreground" />
               </div>
@@ -124,9 +124,9 @@ export function ActivityPage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.05 * index }}
-                  className={`border rounded-xl p-4 ${getColor(activity.severity)}`}
+                  className={`border rounded-xl p-4 sm:p-5 ${getColor(activity.severity)}`}
                 >
-                  <div className="flex gap-4">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-4">
                     <div
                       className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                         activity.severity === "critical"
@@ -141,12 +141,12 @@ export function ActivityPage() {
                       {getIcon(activity.type)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="mb-1">{activity.title}</h4>
-                      <p className="text-sm text-muted-foreground">
+                      <h4 className="mb-1 break-words">{activity.title}</h4>
+                      <p className="text-sm text-muted-foreground break-words">
                         {activity.device} • {activity.time}
                       </p>
                     </div>
-                    <div className="text-sm text-muted-foreground whitespace-nowrap">
+                    <div className="text-sm text-muted-foreground whitespace-nowrap self-start sm:ml-auto">
                       {new Date(activity.timestamp).toLocaleTimeString([], {
                         hour: "2-digit",
                         minute: "2-digit",

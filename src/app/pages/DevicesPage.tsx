@@ -35,15 +35,15 @@ export function DevicesPage() {
     );
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="max-w-md mx-auto">
-        <div className="px-6 pt-8 pb-6">
-          <div className="mb-6">
-            <h1 className="text-3xl mb-2">Devices</h1>
+    <div className="min-h-dvh bg-background pb-28 sm:pb-32">
+      <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
+        <div className="py-6 sm:py-8 lg:py-10 space-y-6 lg:space-y-8">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-3xl sm:text-4xl mb-0">Devices</h1>
             <p className="text-muted-foreground">Live Firebase devices</p>
           </div>
 
-          <div className="relative mb-6">
+          <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <input
               type="text"
@@ -54,7 +54,7 @@ export function DevicesPage() {
             />
           </div>
 
-          <div className="flex gap-2 mb-6 overflow-x-auto">
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0">
             {(["all", "online", "offline", "alert"] as FilterType[]).map((f) => (
               <button
                 key={f}
@@ -96,7 +96,7 @@ export function DevicesPage() {
               )}
             </motion.div>
           ) : (
-            <div className="space-y-3">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {filteredDevices.map((device, index) => (
                 <motion.div
                   key={device.id}
@@ -104,15 +104,15 @@ export function DevicesPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.05 * index }}
                   onClick={() => navigate(`/devices/${device.id}`)}
-                  className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                  className={`p-4 sm:p-5 rounded-xl border cursor-pointer transition-all ${
                     device.status === "offline"
                       ? "bg-status-warning/10 border-status-warning/30"
                       : "bg-card border-border hover:border-primary/50"
                   }`}
                 >
-                  <div className="flex items-start gap-4">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                     <div
-                      className={`w-14 h-14 rounded-xl flex items-center justify-center ${
+                      className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${
                         device.status === "offline" ? "bg-status-offline/20" : "bg-primary/10"
                       }`}
                     >
@@ -123,14 +123,14 @@ export function DevicesPage() {
                       )}
                     </div>
 
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h4 className="mb-1">{device.name}</h4>
-                          <p className="text-sm text-muted-foreground">{device.location}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between mb-2">
+                        <div className="min-w-0">
+                          <h4 className="mb-1 truncate">{device.name}</h4>
+                          <p className="text-sm text-muted-foreground break-words">{device.location}</p>
                         </div>
                         <div
-                          className={`text-sm px-3 py-1 rounded-lg ${
+                          className={`text-sm px-3 py-1 rounded-lg inline-flex self-start ${
                             device.status === "offline"
                               ? "bg-status-offline/20 text-status-offline"
                               : "bg-status-safe/20 text-status-safe"
@@ -140,7 +140,7 @@ export function DevicesPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-4 text-sm">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 text-sm">
                         <div className="flex items-center gap-1.5">
                           {device.status === "online" ? (
                             <Wifi className="w-4 h-4 text-status-safe" />
@@ -152,17 +152,13 @@ export function DevicesPage() {
                           </span>
                         </div>
 
-                        <>
-                          <span className="text-muted-foreground">•</span>
-                          <span className="text-muted-foreground">
-                            {device.monitoring ? "Monitoring Active" : "Monitoring Off"}
-                          </span>
-                        </>
+                        <div className="hidden sm:block text-muted-foreground">•</div>
+                        <span className="text-muted-foreground">{device.monitoring ? "Monitoring Active" : "Monitoring Off"}</span>
                       </div>
 
-                      <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                        <span>{device.info?.device_type ?? device.deviceType ?? "Unknown type"}</span>
-                        <span>
+                      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-xs text-muted-foreground">
+                        <span className="break-words">{device.info?.device_type ?? device.deviceType ?? "Unknown type"}</span>
+                        <span className="break-words">
                           {device.sensor?.laser === "BLOCKED"
                             ? "Laser blocked"
                             : device.laserOn
@@ -171,9 +167,11 @@ export function DevicesPage() {
                         </span>
                       </div>
 
-                      <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Heap: {device.freeHeap ?? device.freeheap}</span>
-                        <span>{device.schedule ? "Schedule set" : `Uptime: ${device.uptimeSec ?? device.uptime} sec`}</span>
+                      <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-xs text-muted-foreground">
+                        <span className="break-words">Heap: {device.freeHeap ?? device.freeheap}</span>
+                        <span className="break-words">
+                          {device.schedule ? "Schedule set" : `Uptime: ${device.uptimeSec ?? device.uptime} sec`}
+                        </span>
                       </div>
                     </div>
                   </div>

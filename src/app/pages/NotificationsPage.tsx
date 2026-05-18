@@ -158,26 +158,26 @@ export function NotificationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="max-w-md mx-auto">
-        <div className="px-6 pt-8 pb-6">
-          <div className="flex items-center gap-4 mb-8">
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="p-2 hover:bg-accent rounded-xl transition-colors"
-            >
-              <ArrowLeft className="w-6 h-6" />
-            </button>
-            <div className="flex-1">
-              <h1 className="text-2xl">Notifications</h1>
-              <p className="text-sm text-muted-foreground">
-                {unreadCount} unread
-              </p>
+    <div className="min-h-dvh bg-background pb-28 sm:pb-32">
+      <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
+        <div className="py-6 sm:py-8 lg:py-10 space-y-6 lg:space-y-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-4 min-w-0">
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="p-2 hover:bg-accent rounded-xl transition-colors shrink-0"
+              >
+                <ArrowLeft className="w-6 h-6" />
+              </button>
+              <div className="min-w-0">
+                <h1 className="text-2xl sm:text-3xl truncate">Notifications</h1>
+                <p className="text-sm text-muted-foreground">{unreadCount} unread</p>
+              </div>
             </div>
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-sm text-primary hover:underline"
+                className="text-sm text-primary hover:underline self-start sm:self-auto"
               >
                 Mark all read
               </button>
@@ -193,7 +193,7 @@ export function NotificationsPage() {
               Loading Firebase notifications...
             </div>
           ) : notifications.length === 0 ? (
-            <div className="text-center py-16">
+            <div className="text-center py-16 px-4">
               <div className="w-24 h-24 mx-auto mb-6 bg-muted/50 rounded-3xl flex items-center justify-center">
                 <Shield className="w-12 h-12 text-muted-foreground" />
               </div>
@@ -210,7 +210,7 @@ export function NotificationsPage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.05 * index }}
-                  className={`border rounded-xl p-4 ${
+                  className={`border rounded-xl p-4 sm:p-5 ${
                     notification.read
                       ? "bg-card border-border opacity-70"
                       : getColor(notification.type)
@@ -219,7 +219,7 @@ export function NotificationsPage() {
                   {!notification.read && (
                     <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-primary" />
                   )}
-                  <div className="flex gap-4 pr-8">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-4 pr-8 sm:pr-10">
                     <div
                       className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                         notification.type === "critical"
@@ -232,8 +232,8 @@ export function NotificationsPage() {
                       {getIcon(notification.type)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4>{notification.title}</h4>
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <h4 className="break-words">{notification.title}</h4>
                         {notification.type === "critical" && (
                           <span className="text-xs px-2 py-0.5 rounded-full bg-status-alert/20 text-status-alert">
                             URGENT
@@ -243,7 +243,7 @@ export function NotificationsPage() {
                       <p className="text-sm text-muted-foreground mb-2">
                         {notification.message}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground break-words">
                         {notification.device} • {notification.time}
                       </p>
                     </div>

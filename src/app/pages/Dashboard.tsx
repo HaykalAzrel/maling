@@ -49,12 +49,14 @@ export function Dashboard() {
   const visibleDevices = devices.slice(0, 4);
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="max-w-md mx-auto">
-        <div className="px-6 pt-8 pb-6">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <p className="text-muted-foreground mb-1">{greeting}, {displayName}</p>
+    <div className="min-h-dvh bg-background pb-28 sm:pb-32">
+      <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
+        <div className="py-6 sm:py-8 lg:py-10 space-y-6 lg:space-y-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-muted-foreground mb-1 text-sm sm:text-base">
+                {greeting}, {displayName}
+              </p>
               <p className="text-xs text-muted-foreground">{displayEmail}</p>
               <p className="text-sm text-muted-foreground">
                 {new Date().toLocaleTimeString("en-US", {
@@ -63,7 +65,7 @@ export function Dashboard() {
                 })}
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between gap-3 sm:justify-end">
               <motion.div
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
@@ -84,97 +86,99 @@ export function Dashboard() {
             </div>
           </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`p-6 rounded-2xl mb-6 border ${
-              offlineDevices.length > 0
-                ? "bg-status-warning/10 border-status-warning/30"
-                : "bg-card border-border"
-            }`}
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                {offlineDevices.length > 0 ? (
-                  <AlertTriangle className="w-8 h-8 text-status-warning" />
-                ) : (
-                  <Shield className="w-8 h-8 text-status-safe" />
-                )}
-                <div>
-                  <h3 className="text-2xl">
-                    {offlineDevices.length > 0 ? "DEVICES NEED ATTENTION" : "SYSTEM ACTIVE"}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {offlineDevices.length > 0
-                      ? "Some Firebase devices are offline"
-                      : "All Firebase devices are operating normally"}
-                  </p>
+          <div className="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`p-5 sm:p-6 rounded-2xl border ${
+                offlineDevices.length > 0
+                  ? "bg-status-warning/10 border-status-warning/30"
+                  : "bg-card border-border"
+              }`}
+            >
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex items-start gap-3">
+                  {offlineDevices.length > 0 ? (
+                    <AlertTriangle className="w-8 h-8 text-status-warning shrink-0" />
+                  ) : (
+                    <Shield className="w-8 h-8 text-status-safe shrink-0" />
+                  )}
+                  <div className="min-w-0">
+                    <h3 className="text-xl sm:text-2xl">
+                      {offlineDevices.length > 0 ? "DEVICES NEED ATTENTION" : "SYSTEM ACTIVE"}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-xl">
+                      {offlineDevices.length > 0
+                        ? "Some Firebase devices are offline"
+                        : "All Firebase devices are operating normally"}
+                    </p>
+                  </div>
                 </div>
+                {offlineDevices.length === 0 && (
+                  <motion.div
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="w-3 h-3 rounded-full bg-status-safe self-start sm:self-auto"
+                  />
+                )}
               </div>
-              {offlineDevices.length === 0 && (
-                <motion.div
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="w-3 h-3 rounded-full bg-status-safe"
-                />
-              )}
+              <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                <span>{onlineDevices.length} devices online</span>
+                <span className="hidden sm:inline">•</span>
+                <span>{monitoringDevices.length} monitoring</span>
+              </div>
+            </motion.div>
+
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-2">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 }}
+                className="bg-card border border-border rounded-xl p-4 sm:p-5"
+              >
+                <Wifi className="w-6 h-6 text-status-safe mb-3" />
+                <div className="text-2xl mb-1">{onlineDevices.length}</div>
+                <div className="text-sm text-muted-foreground">Online Devices</div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 }}
+                className="bg-card border border-border rounded-xl p-4 sm:p-5"
+              >
+                <AlertTriangle className="w-6 h-6 text-status-warning mb-3" />
+                <div className="text-2xl mb-1">{offlineDevices.length}</div>
+                <div className="text-sm text-muted-foreground">Offline Devices</div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3 }}
+                className="bg-card border border-border rounded-xl p-4 sm:p-5"
+              >
+                <Activity className="w-6 h-6 text-primary mb-3" />
+                <div className="text-2xl mb-1">{monitoringDevices.length}</div>
+                <div className="text-sm text-muted-foreground">Monitoring</div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.4 }}
+                className="bg-card border border-border rounded-xl p-4 sm:p-5"
+              >
+                <Shield className="w-6 h-6 text-status-safe mb-3" />
+                <div className="text-2xl mb-1">{health}%</div>
+                <div className="text-sm text-muted-foreground">Health</div>
+              </motion.div>
             </div>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>{onlineDevices.length} devices online</span>
-              <span>•</span>
-              <span>{monitoringDevices.length} monitoring</span>
-            </div>
-          </motion.div>
-
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1 }}
-              className="bg-card border border-border rounded-xl p-4"
-            >
-              <Wifi className="w-6 h-6 text-status-safe mb-3" />
-              <div className="text-2xl mb-1">{onlineDevices.length}</div>
-              <div className="text-sm text-muted-foreground">Online Devices</div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="bg-card border border-border rounded-xl p-4"
-            >
-              <AlertTriangle className="w-6 h-6 text-status-warning mb-3" />
-              <div className="text-2xl mb-1">{offlineDevices.length}</div>
-              <div className="text-sm text-muted-foreground">Offline Devices</div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3 }}
-              className="bg-card border border-border rounded-xl p-4"
-            >
-              <Activity className="w-6 h-6 text-primary mb-3" />
-              <div className="text-2xl mb-1">{monitoringDevices.length}</div>
-              <div className="text-sm text-muted-foreground">Monitoring</div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.4 }}
-              className="bg-card border border-border rounded-xl p-4"
-            >
-              <Shield className="w-6 h-6 text-status-safe mb-3" />
-              <div className="text-2xl mb-1">{health}%</div>
-              <div className="text-sm text-muted-foreground">Health</div>
-            </motion.div>
           </div>
 
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg">Live Devices</h3>
-            <div className="flex gap-2">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h3 className="text-lg sm:text-xl">Live Devices</h3>
+            <div className="flex gap-2 self-start sm:self-auto">
               <button className="p-2 hover:bg-accent rounded-lg transition-colors">
                 <RefreshCw className="w-5 h-5" />
               </button>
@@ -196,7 +200,7 @@ export function Dashboard() {
               No devices found in Firebase.
             </div>
           ) : (
-            <div className="space-y-3 mb-6">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {visibleDevices.map((device, index) => (
                 <motion.div
                   key={device.id}
@@ -204,16 +208,16 @@ export function Dashboard() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 * index }}
                   onClick={() => navigate(`/devices/${device.id}`)}
-                  className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                  className={`p-4 sm:p-5 rounded-xl border cursor-pointer transition-all ${
                     device.status === "offline"
                       ? "bg-status-warning/10 border-status-warning/30"
                       : "bg-card border-border hover:border-primary/50"
                   }`}
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4>{device.name}</h4>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <h4 className="truncate">{device.name}</h4>
                         <motion.div
                           animate={{ opacity: [0.5, 1, 0.5] }}
                           transition={{ duration: 2, repeat: Infinity }}
@@ -222,11 +226,11 @@ export function Dashboard() {
                           }`}
                         />
                       </div>
-                      <p className="text-sm text-muted-foreground">{device.location}</p>
+                      <p className="text-sm text-muted-foreground break-words">{device.location}</p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right self-start">
                       <div
-                        className={`text-sm px-2 py-1 rounded-lg ${
+                        className={`text-sm px-2 py-1 rounded-lg inline-flex ${
                           device.status === "offline"
                             ? "bg-status-offline/20 text-status-offline"
                             : "bg-status-safe/20 text-status-safe"
@@ -237,16 +241,20 @@ export function Dashboard() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-muted-foreground">
+                    <span className="min-w-0">
                       Type: <span className="text-foreground">{device.deviceType ?? device.name}</span>
                     </span>
                     <span>{device.monitoring ? "Monitoring active" : "Monitoring off"}</span>
                   </div>
 
-                  <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
-                    <span>Heap: <span className="text-foreground">{device.freeHeap ?? device.freeheap}</span></span>
-                    <span>Uptime: <span className="text-foreground">{device.uptimeSec ?? device.uptime} sec</span></span>
+                  <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-muted-foreground">
+                    <span>
+                      Heap: <span className="text-foreground">{device.freeHeap ?? device.freeheap}</span>
+                    </span>
+                    <span>
+                      Uptime: <span className="text-foreground">{device.uptimeSec ?? device.uptime} sec</span>
+                    </span>
                   </div>
                 </motion.div>
               ))}

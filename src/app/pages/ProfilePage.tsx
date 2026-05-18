@@ -41,25 +41,25 @@ export function ProfilePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="max-w-md mx-auto">
-        <div className="px-6 pt-8 pb-6">
-          <div className="mb-8">
-            <h1 className="text-3xl mb-2">Profile</h1>
+    <div className="min-h-dvh bg-background pb-28 sm:pb-32">
+      <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
+        <div className="py-6 sm:py-8 lg:py-10 space-y-6 lg:space-y-8">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-3xl sm:text-4xl mb-0">Profile</h1>
             <p className="text-muted-foreground">Manage your account settings</p>
           </div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-card border border-border rounded-2xl p-6 mb-6"
+            className="bg-card border border-border rounded-2xl p-4 sm:p-6"
           >
-            <div className="flex items-center gap-4">
-              <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 shrink-0">
                 <span className="text-4xl">👤</span>
               </div>
-              <div className="flex-1">
-                <h3 className="text-xl mb-1">{displayName}</h3>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-xl mb-1 break-words">{displayName}</h3>
                 <p className="text-sm text-muted-foreground mb-2">{displayEmail}</p>
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-status-safe/10 text-status-safe rounded-lg text-sm">
                   <div className="w-2 h-2 rounded-full bg-status-safe" />
@@ -69,38 +69,38 @@ export function ProfilePage() {
             </div>
           </motion.div>
 
-          <div className="mb-6">
+          <div>
             <h3 className="text-sm text-muted-foreground mb-3 px-2">SETTINGS</h3>
             <div className="bg-card border border-border rounded-2xl overflow-hidden">
               {menuItems.map((item, index) => (
                 <button
                   key={index}
                   onClick={() => navigate(item.path)}
-                  className="w-full flex items-center gap-4 px-4 py-4 hover:bg-accent transition-colors border-b border-border last:border-b-0"
+                  className="w-full flex items-center gap-4 px-4 py-4 hover:bg-accent transition-colors border-b border-border last:border-b-0 text-left"
                 >
                   <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
                     <item.icon className="w-5 h-5 text-primary" />
                   </div>
-                  <span className="flex-1 text-left">{item.label}</span>
+                  <span className="flex-1 min-w-0 text-left">{item.label}</span>
                   <ChevronRight className="w-5 h-5 text-muted-foreground" />
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="mb-6">
+          <div>
             <h3 className="text-sm text-muted-foreground mb-3 px-2">
               APP SETTINGS
             </h3>
-            <div className="bg-card border border-border rounded-2xl p-4 space-y-4">
-              <div className="flex items-center justify-between">
+            <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 space-y-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
                     <Moon className="w-5 h-5 text-primary" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p>Theme</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground break-words">
                       Switch between dark and calm light mode
                     </p>
                   </div>
@@ -119,14 +119,14 @@ export function ProfilePage() {
                 </button>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
                     <Bell className="w-5 h-5 text-primary" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p>Push Notifications</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground break-words">
                       Receive alerts
                     </p>
                   </div>
@@ -144,14 +144,14 @@ export function ProfilePage() {
                 </button>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
                     <Volume2 className="w-5 h-5 text-primary" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p>Sound</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground break-words">
                       Alert sound effects
                     </p>
                   </div>
@@ -169,14 +169,14 @@ export function ProfilePage() {
                 </button>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
                     <Vibrate className="w-5 h-5 text-primary" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p>Vibration</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground break-words">
                       Haptic feedback
                     </p>
                   </div>
@@ -204,7 +204,7 @@ export function ProfilePage() {
             Logout
           </button>
 
-          <div className="mt-8 text-center text-sm text-muted-foreground">
+          <div className="pt-2 text-center text-sm text-muted-foreground">
             <p>SecureSense v2.1.0</p>
             <p className="mt-1">© 2026 SecureSense. All rights reserved.</p>
           </div>

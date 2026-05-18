@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-import React from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { toast } from "sonner";
 import { AlertTriangle, Bell, CircleCheckBig, ShieldAlert, X } from "lucide-react";
@@ -27,12 +26,6 @@ import { useFirebaseAuth } from "../hooks/useFirebaseAuth";
 import { useFirebaseDevices } from "../hooks/useFirebaseDevices";
 import { useFirebaseActivity } from "../hooks/useFirebaseActivity";
 import type { ActivityItem } from "../hooks/useFirebaseActivity";
-import { requestNotificationPermission } from '../services/notificationService';
-
-let SESSION_START = Date.now();
-export const refreshSessionStart = () => {
-  SESSION_START = Date.now();
-};
 
 type AlarmState = {
   id: string;
@@ -45,43 +38,35 @@ type AlarmState = {
 
 function AlarmToastBridge() {
   const { devices } = useFirebaseDevices();
-  // ✅ Ambil loading dari useFirebaseActivity
-  const { activities, loading } = useFirebaseActivity(devices);
+  const { activities } = useFirebaseActivity(devices);
   const seenActivityIds = useRef<Set<string>>(new Set());
-  // ✅ Track apakah initial load sudah selesai
-  const isInitialized = useRef(false);
   const [activeAlarm, setActiveAlarm] = useState<AlarmState | null>(null);
 
-  useEffect(() => {
-    requestNotificationPermission();
-  }, []);
+  const blockedAlarm = useMemo(() => {
+    const blockedActivities = activities.filter((activity) => {
+      const isBlockedSensor = activity.type === "sensor" && activity.title.toLowerCase().includes("blocked");
+      const isCriticalAlert = activity.type === "alert" && activity.severity === "critical";
+
+      return isBlockedSensor || isCriticalAlert;
+    });
+
+    return blockedActivities[0] ?? null;
+  }, [activities]);
 
   useEffect(() => {
-    // ✅ Tunggu sampai loading selesai
-    if (loading) return;
-
-    // ✅ Pertama kali data tiba: tandai SEMUA sebagai seen tanpa trigger popup
-    if (!isInitialized.current) {
-      isInitialized.current = true;
-      seenActivityIds.current = new Set(activities.map((a) => a.id));
-      return;
-    }
-
-    // ✅ Setelah init: hanya proses activity yang benar-benar baru
     const nextSeenIds = new Set(seenActivityIds.current);
 
     activities.forEach((activity) => {
-      // Skip selain sensor blocked
-      if (activity.type !== "sensor") return;
-      if (!activity.title.toLowerCase().includes("blocked")) return;
+      const isBlockedSensor = activity.type === "sensor" && activity.title.toLowerCase().includes("blocked");
+      const isCriticalAlert = activity.type === "alert" && activity.severity === "critical";
 
-      // Skip activity lama sebelum session dimulai
-      if (activity.timestamp < SESSION_START) {
-        nextSeenIds.add(activity.id);
+      if (!isBlockedSensor && !isCriticalAlert) {
         return;
       }
 
-      if (nextSeenIds.has(activity.id)) return;
+      if (nextSeenIds.has(activity.id)) {
+        return;
+      }
 
       nextSeenIds.add(activity.id);
 
@@ -90,25 +75,60 @@ function AlarmToastBridge() {
       });
 
       setActiveAlarm((currentAlarm) => {
-        if (currentAlarm?.id === activity.id) return currentAlarm;
+        if (currentAlarm?.id === activity.id) {
+          return currentAlarm;
+        }
+
         return {
           id: activity.id,
           title: activity.title,
           device: activity.device,
           time: activity.time,
           severity: activity.severity,
-          description: "Laser sensor was blocked. Immediate attention is required.",
+          description:
+            activity.type === "sensor"
+              ? "Laser sensor was blocked. Immediate attention is required."
+              : "Critical intrusion alert was received from Firebase.",
         };
       });
     });
 
     seenActivityIds.current = nextSeenIds;
-  }, [activities, loading]);
+  }, [activities]);
+
+  useEffect(() => {
+    if (!blockedAlarm) {
+      return;
+    }
+
+    if (seenActivityIds.current.has(blockedAlarm.id)) {
+      return;
+    }
+
+    setActiveAlarm((currentAlarm) => {
+      if (currentAlarm?.id === blockedAlarm.id) {
+        return currentAlarm;
+      }
+
+      return {
+        id: blockedAlarm.id,
+        title: blockedAlarm.title,
+        device: blockedAlarm.device,
+        time: blockedAlarm.time,
+        severity: blockedAlarm.severity,
+        description:
+          blockedAlarm.type === "sensor"
+            ? "Laser sensor was blocked. Immediate attention is required."
+            : "Critical intrusion alert was received from Firebase.",
+      };
+    });
+  }, [blockedAlarm]);
 
   const dismissAlarm = () => {
     if (activeAlarm) {
       seenActivityIds.current.add(activeAlarm.id);
     }
+
     setActiveAlarm(null);
   };
 
@@ -177,15 +197,11 @@ function AlarmToastBridge() {
   );
 }
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute({ children }: { children: ReactNode }) {
   const { loading, isAuthenticated } = useFirebaseAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
-        Loading
-      </div>
-    );
+    return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Checking Firebase auth...</div>;
   }
 
   if (!isAuthenticated) {
