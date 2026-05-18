@@ -125,8 +125,6 @@ export const getDeviceById = async (deviceId: string): Promise<Device | null> =>
         const rawValue = snapshot.val();
         return rawValue ? normalizeDevice(deviceKey, rawValue as DeviceRecord) : null;
     } catch (error) {
-        // permission_denied or network error — treat as device not found
-        // so the caller can still attempt to claim it
         console.warn(`getDeviceById(${deviceKey}) failed, treating as unclaimed:`, error);
         return null;
     }
@@ -189,7 +187,6 @@ export const upsertDevice = async ({
     const existingSnapshot = await get(deviceRef);
     const existingData = (existingSnapshot.val() || {}) as Partial<DeviceRecord>;
 
-    // ✅ Fix: check BOTH 'ownerId' (app field) and 'owner' (firmware field)
     const existingOwner = existingData.ownerId || existingData.owner || null;
     const ownerIsEmpty = !existingOwner || existingOwner === "";
 
@@ -213,7 +210,6 @@ export const upsertDevice = async ({
             threshold: existingConfig.threshold ?? 50,
         },
         status: existingData.status ?? (monitoring ? "online" : "offline"),
-        // ✅ Fix: write BOTH 'owner' and 'ownerId' so firmware & app are consistent
         owner: ownerId ?? existingOwner ?? null,
         ownerId: ownerId ?? existingOwner ?? null,
         registeredAt: existingData.registeredAt ?? now,
@@ -254,6 +250,46 @@ export const upsertDevice = async ({
     });
 
     return { id: key, deviceId: trimmedDeviceId };
+};
+
+export const removeDevice = async (deviceId: string): Promise<void> => {
+    if (!database) {
+        throw new Error("Firebase Realtime Database is not configured.");
+    }
+
+    const key = sanitizeDeviceKey(deviceId);
+
+    if (!key) {
+        throw new Error("Device ID is required.");
+    }
+
+    await remove(ref(database, `devices/${key}`));
+};
+
+// ✅ Toggle power untuk satu device spesifik (dipakai DeviceDetailPage)
+export const setDevicePowered = async (deviceId: string, enabled: boolean): Promise<void> => {
+    if (!database) {
+        throw new Error("Firebase Realtime Database is not configured.");
+    }
+
+    const key = sanitizeDeviceKey(deviceId);
+
+    if (!key) {
+        throw new Error("Device ID is required.");
+    }
+
+    const now = Date.now();
+
+    await update(ref(database), {
+        [`devices/${key}/monitoring`]: enabled,
+        [`devices/${key}/laser_on`]: enabled,
+        [`devices/${key}/config/monitoring`]: enabled,
+        [`devices/${key}/config/laser_on`]: enabled,
+        [`devices/${key}/online`]: enabled,
+        [`devices/${key}/status`]: enabled ? "online" : "offline",
+        [`devices/${key}/lastSeen`]: now,
+        [`devices/${key}/info/last_seen`]: now,
+    });
 };
 
 export const setAllDevicesPowered = async (enabled: boolean, devices: Device[]) => {

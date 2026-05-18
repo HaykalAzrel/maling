@@ -39,7 +39,7 @@ export function AddDevicePage() {
       }
 
       // ✅ Cek owner dari kedua field: 'ownerId' (app) dan 'owner' (firmware)
-      const existingOwner = existingDevice?.ownerId ?? existingDevice?.owner ?? null;
+      const existingOwner = existingDevice?.ownerId ?? existingDevice?.ownerId ?? null;
       const ownerIsEmpty = !existingOwner || existingOwner === "";
 
       if (!ownerIsEmpty && existingOwner !== user?.uid) {

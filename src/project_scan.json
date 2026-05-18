@@ -10,7 +10,7 @@
                     "name": "App.tsx",
                     "type": "file",
                     "extension": ".tsx",
-                    "size_mb": 0.0092,
+                    "size_mb": 0.0085,
                     "path": "./app\\App.tsx"
                 },
                 {
@@ -21,7 +21,7 @@
                             "name": "BottomNav.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0036,
+                            "size_mb": 0.0037,
                             "path": "./app\\components\\BottomNav.tsx"
                         },
                         {
@@ -396,21 +396,21 @@
                             "name": "AddDevicePage.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0075,
+                            "size_mb": 0.0079,
                             "path": "./app\\pages\\AddDevicePage.tsx"
                         },
                         {
                             "name": "Dashboard.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.013,
+                            "size_mb": 0.0105,
                             "path": "./app\\pages\\Dashboard.tsx"
                         },
                         {
                             "name": "DeviceDetailPage.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0254,
+                            "size_mb": 0.027,
                             "path": "./app\\pages\\DeviceDetailPage.tsx"
                         },
                         {
@@ -424,7 +424,7 @@
                             "name": "LoginPage.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0067,
+                            "size_mb": 0.0078,
                             "path": "./app\\pages\\LoginPage.tsx"
                         },
                         {
@@ -508,7 +508,7 @@
                     "name": "useFirebaseDevices.ts",
                     "type": "file",
                     "extension": ".ts",
-                    "size_mb": 0.0024,
+                    "size_mb": 0.0043,
                     "path": "./hooks\\useFirebaseDevices.ts"
                 }
             ]
@@ -547,6 +547,13 @@
             "path": "./main.tsx"
         },
         {
+            "name": "project_scan.json",
+            "type": "file",
+            "extension": ".json",
+            "size_mb": 0.0293,
+            "path": "./project_scan.json"
+        },
+        {
             "name": "services",
             "type": "folder",
             "children": [
@@ -575,8 +582,15 @@
                     "name": "deviceService.ts",
                     "type": "file",
                     "extension": ".ts",
-                    "size_mb": 0.009,
+                    "size_mb": 0.01,
                     "path": "./services\\deviceService.ts"
+                },
+                {
+                    "name": "notificationService.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.0012,
+                    "path": "./services\\notificationService.ts"
                 },
                 {
                     "name": "sensorService.ts",

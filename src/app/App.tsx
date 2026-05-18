@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { toast } from "sonner";
@@ -27,12 +27,9 @@ import { useFirebaseAuth } from "../hooks/useFirebaseAuth";
 import { useFirebaseDevices } from "../hooks/useFirebaseDevices";
 import { useFirebaseActivity } from "../hooks/useFirebaseActivity";
 import type { ActivityItem } from "../hooks/useFirebaseActivity";
-import { requestNotificationPermission, showAlarmNotification } from '../services/notificationService'
+import { requestNotificationPermission } from '../services/notificationService';
 
-// ✅ Catat waktu app dibuka — hanya alert SETELAH ini yang boleh trigger popup
-// Reset SESSION_START setiap kali user berinteraksi
 let SESSION_START = Date.now();
-
 export const refreshSessionStart = () => {
   SESSION_START = Date.now();
 };
@@ -48,23 +45,37 @@ type AlarmState = {
 
 function AlarmToastBridge() {
   const { devices } = useFirebaseDevices();
-  const { activities } = useFirebaseActivity(devices);
+  // ✅ Ambil loading dari useFirebaseActivity
+  const { activities, loading } = useFirebaseActivity(devices);
   const seenActivityIds = useRef<Set<string>>(new Set());
+  // ✅ Track apakah initial load sudah selesai
+  const isInitialized = useRef(false);
   const [activeAlarm, setActiveAlarm] = useState<AlarmState | null>(null);
 
   useEffect(() => {
-      requestNotificationPermission();
-    }, []);
+    requestNotificationPermission();
+  }, []);
 
-    useEffect(() => {
-      const nextSeenIds = new Set(seenActivityIds.current);
+  useEffect(() => {
+    // ✅ Tunggu sampai loading selesai
+    if (loading) return;
 
-      activities.forEach((activity) => {
-        // ✅ Skip semua activity selain sensor blocked
+    // ✅ Pertama kali data tiba: tandai SEMUA sebagai seen tanpa trigger popup
+    if (!isInitialized.current) {
+      isInitialized.current = true;
+      seenActivityIds.current = new Set(activities.map((a) => a.id));
+      return;
+    }
+
+    // ✅ Setelah init: hanya proses activity yang benar-benar baru
+    const nextSeenIds = new Set(seenActivityIds.current);
+
+    activities.forEach((activity) => {
+      // Skip selain sensor blocked
       if (activity.type !== "sensor") return;
       if (!activity.title.toLowerCase().includes("blocked")) return;
 
-      // ✅ Skip activity lama sebelum app dibuka
+      // Skip activity lama sebelum session dimulai
       if (activity.timestamp < SESSION_START) {
         nextSeenIds.add(activity.id);
         return;
@@ -91,8 +102,8 @@ function AlarmToastBridge() {
       });
     });
 
-      seenActivityIds.current = nextSeenIds;
-    }, [activities]);
+    seenActivityIds.current = nextSeenIds;
+  }, [activities, loading]);
 
   const dismissAlarm = () => {
     if (activeAlarm) {

@@ -2,7 +2,6 @@ import { Bell, Shield, Wifi, Activity, AlertTriangle, Plus, RefreshCw } from "lu
 import { motion } from "motion/react";
 import { useNavigate } from "react-router";
 import { useFirebaseDevices } from "../../hooks/useFirebaseDevices";
-import { useFirebaseActivity } from "../../hooks/useFirebaseActivity";
 import { useFirebaseAuth } from "../../hooks/useFirebaseAuth";
 
 const formatLastSeen = (timestamp?: number) => {
@@ -36,7 +35,6 @@ const formatLastSeen = (timestamp?: number) => {
 export function Dashboard() {
   const navigate = useNavigate();
   const { devices, loading } = useFirebaseDevices();
-  const { activities, loading: activityLoading } = useFirebaseActivity(devices);
   const { user } = useFirebaseAuth();
   const currentHour = new Date().getHours();
   const greeting =
@@ -49,7 +47,6 @@ export function Dashboard() {
   const monitoringDevices = devices.filter((device) => device.monitoring);
   const health = devices.length ? Math.round((onlineDevices.length / devices.length) * 100) : 0;
   const visibleDevices = devices.slice(0, 4);
-  const recentActivity = activities.slice(0, 4);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -255,54 +252,6 @@ export function Dashboard() {
               ))}
             </div>
           )}
-
-          <div className="mb-4">
-            <h3 className="text-lg mb-4">Recent Activity</h3>
-            <div className="space-y-3">
-              {loading || activityLoading ? (
-                <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
-                  Loading Firebase activity...
-                </div>
-              ) : recentActivity.length === 0 ? (
-                <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
-                  No recent activity in Firebase.
-                </div>
-              ) : (
-                recentActivity.map((activity, index) => (
-                  <motion.div
-                    key={activity.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 * index }}
-                    className="flex gap-4 items-start"
-                  >
-                    <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                        activity.severity === "critical"
-                          ? "bg-destructive/10 text-destructive"
-                          : activity.severity === "warning"
-                          ? "bg-status-warning/10 text-status-warning"
-                          : activity.severity === "success"
-                          ? "bg-status-safe/10 text-status-safe"
-                          : "bg-primary/10 text-primary"
-                      }`}
-                    >
-                      {activity.severity === "critical" && <AlertTriangle className="w-5 h-5" />}
-                      {activity.severity === "warning" && <AlertTriangle className="w-5 h-5" />}
-                      {activity.severity === "success" && <Shield className="w-5 h-5" />}
-                      {activity.severity === "info" && <Activity className="w-5 h-5" />}
-                    </div>
-                    <div className="flex-1">
-                      <p className="mb-1">{activity.title}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {activity.device} • {activity.time}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))
-              )}
-            </div>
-          </div>
         </div>
       </div>
     </div>

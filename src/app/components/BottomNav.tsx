@@ -47,7 +47,7 @@ export function BottomNav() {
       <div className="max-w-md mx-auto px-6 pb-4 pt-3 relative pointer-events-auto">
 
         {/* Power button — overlap navbar */}
-          <div className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 top-0 z-50">
+          <div className="absolute left-1/2 -translate-x-1/2 -translate-y-1/4 top-0 z-50">
             <button
               onClick={toggleAllDevices}
               disabled={isUpdatingPower}
