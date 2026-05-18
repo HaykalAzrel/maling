@@ -14,7 +14,7 @@ export function SplashScreen() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-[#0f1421] to-background flex items-center justify-center relative overflow-hidden">
+    <div className="min-h-dvh bg-gradient-to-br from-background via-[#0f1421] to-background flex items-center justify-center relative overflow-hidden px-4 sm:px-6">
       <div className="absolute inset-0 bg-[linear-gradient(rgba(79,124,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(79,124,255,0.03)_1px,transparent_1px)] bg-[size:50px_50px]" />
 
       <motion.div
@@ -32,13 +32,13 @@ export function SplashScreen() {
             ],
           }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="w-32 h-32 mx-auto mb-8 bg-primary/10 rounded-3xl flex items-center justify-center border border-primary/30"
+          className="w-28 h-28 sm:w-32 sm:h-32 mx-auto mb-8 bg-primary/10 rounded-3xl flex items-center justify-center border border-primary/30"
         >
-          <Shield className="w-16 h-16 text-primary" />
+          <Shield className="w-14 h-14 sm:w-16 sm:h-16 text-primary" />
         </motion.div>
 
-        <h1 className="text-4xl mb-2 tracking-tight">SecureSense</h1>
-        <p className="text-muted-foreground text-lg">Smart IoT Security Monitoring</p>
+        <h1 className="text-3xl sm:text-4xl mb-2 tracking-tight">SecureSense</h1>
+        <p className="text-muted-foreground text-base sm:text-lg">Smart IoT Security Monitoring</p>
 
         <motion.div
           className="mt-12 flex gap-2 justify-center"

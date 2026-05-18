@@ -43,23 +43,18 @@ export function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none">
       <div className="max-w-md mx-auto px-6 pb-4 pt-3 relative pointer-events-auto">
-        <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
+        <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-[8%] z-10">
           <button
             onClick={toggleAllDevices}
             disabled={isUpdatingPower}
-            className={`w-16 h-16 rounded-full border shadow-2xl flex items-center justify-center transition-all ${
+            className={`w-14 h-14 rounded-full border shadow-lg flex items-center justify-center transition-all ${
               isPowerEnabled
-                ? "bg-status-safe text-white border-status-safe/40 shadow-status-safe/40"
-                : "bg-status-alert text-white border-status-alert/40 shadow-status-alert/40"
+                ? "bg-primary text-primary-foreground border-primary/40 shadow-primary/30"
+                : "bg-card text-foreground border-border shadow-muted/20"
             } ${isUpdatingPower ? "scale-95 opacity-80" : "hover:scale-105"}`}
             aria-label="Toggle all devices"
           >
-            <div
-              className={`absolute inset-0 rounded-full blur-xl ${
-                isPowerEnabled ? "bg-status-safe/25" : "bg-status-alert/25"
-              }`}
-            />
-            <Power className={`relative z-10 w-7 h-7 ${isUpdatingPower ? "animate-pulse" : ""}`} />
+            <Power className={`w-6 h-6 ${isUpdatingPower ? "animate-pulse" : ""}`} />
           </button>
         </div>
 

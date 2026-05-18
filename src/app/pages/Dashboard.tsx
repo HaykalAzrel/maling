@@ -65,7 +65,7 @@ export function Dashboard() {
                 })}
               </p>
             </div>
-            <div className="flex items-center justify-between gap-3 sm:justify-end">
+            <div className="flex items-center justify-end gap-3 sm:justify-end self-end sm:self-auto">
               <motion.div
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}

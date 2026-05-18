@@ -71,17 +71,17 @@ export function RegisterPage() {
     "w-full bg-input-background text-foreground placeholder:text-muted-foreground border border-border rounded-xl px-12 py-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all";
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-6 py-12">
+    <div className="min-h-dvh bg-background flex items-center justify-center px-4 sm:px-6 py-10">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
+        className="w-full max-w-[520px]"
       >
         <div className="text-center mb-8">
           <div className="w-20 h-20 mx-auto mb-6 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20">
             <Shield className="w-10 h-10 text-primary" />
           </div>
-          <h1 className="text-3xl mb-2">Create Account</h1>
+          <h1 className="text-3xl sm:text-4xl mb-2">Create Account</h1>
           <p className="text-muted-foreground">Get started with SecureSense</p>
         </div>
 

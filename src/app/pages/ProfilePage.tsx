@@ -33,7 +33,7 @@ export function ProfilePage() {
   };
 
   const menuItems = [
-    { icon: Bell, label: "Notifications", path: "/settings/notifications" },
+    { icon: Bell, label: "Notifications", path: "/notifications" },
     { icon: Moon, label: "Appearance", path: "/settings/appearance" },
     { icon: Lock, label: "Security", path: "/settings/security" },
     { icon: Shield, label: "Connected Devices", path: "/devices" },
