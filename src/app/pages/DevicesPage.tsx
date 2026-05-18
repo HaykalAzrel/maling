@@ -1,16 +1,14 @@
-import { useState } from "react";
-import { Shield, Search, Wifi, WifiOff, AlertTriangle, Plus } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Shield, Search, Wifi, WifiOff, Plus } from "lucide-react";
 import { motion } from "motion/react";
 import { useNavigate } from "react-router";
 import { useFirebaseDevices } from "../../hooks/useFirebaseDevices";
+import { usePullToRefresh, PullIndicator, SafeTopSpacer } from "../../hooks/usePullToRefresh";
 
 type FilterType = "all" | "online" | "offline" | "alert";
 
 const toSignalStrength = (rssi?: number) => {
-  if (typeof rssi !== "number") {
-    return 0;
-  }
-
+  if (typeof rssi !== "number") return 0;
   return Math.max(0, Math.min(100, 100 + rssi));
 };
 
@@ -19,6 +17,14 @@ export function DevicesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const { devices, loading } = useFirebaseDevices();
+
+  // ── Pull-to-refresh ────────────────────────────────────────────────────
+  const handleRefresh = useCallback(async () => {
+    await new Promise((res) => setTimeout(res, 800));
+  }, []);
+
+  const { refreshing, pullDistance, threshold, touchHandlers } =
+    usePullToRefresh(handleRefresh);
 
   const filteredDevices = devices
     .filter((device) => {
@@ -35,11 +41,25 @@ export function DevicesPage() {
     );
 
   return (
-    <div className="min-h-dvh bg-background pb-28 sm:pb-32">
+    <div
+      className="min-h-dvh bg-background pb-28 sm:pb-32"
+      {...touchHandlers}
+    >
+      {/* Status bar spacer */}
+      <SafeTopSpacer />
+
+      <PullIndicator
+        pullDistance={pullDistance}
+        refreshing={refreshing}
+        threshold={threshold}
+      />
+
       <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
-        <div className="py-6 sm:py-8 lg:py-10 space-y-6 lg:space-y-8">
+        <div className="pt-4 pb-6 space-y-6 lg:space-y-8">
           <div className="flex flex-col gap-2">
-            <h1 className="text-3xl sm:text-4xl mb-0">Devices</h1>
+            <h1 className="text-3xl sm:text-4xl mb-0 leading-tight">
+              Devices
+            </h1>
             <p className="text-muted-foreground">Live Firebase devices</p>
           </div>
 
@@ -55,23 +75,27 @@ export function DevicesPage() {
           </div>
 
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0">
-            {(["all", "online", "offline", "alert"] as FilterType[]).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-4 py-2 rounded-xl text-sm whitespace-nowrap transition-all ${
-                  filter === f
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-card border border-border hover:bg-accent"
-                }`}
-              >
-                {f.charAt(0).toUpperCase() + f.slice(1)}
-              </button>
-            ))}
+            {(["all", "online", "offline", "alert"] as FilterType[]).map(
+              (f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`px-4 py-2 rounded-xl text-sm whitespace-nowrap transition-all ${
+                    filter === f
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-card border border-border hover:bg-accent"
+                  }`}
+                >
+                  {f.charAt(0).toUpperCase() + f.slice(1)}
+                </button>
+              )
+            )}
           </div>
 
           {loading && devices.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">Connecting to Firebase...</div>
+            <div className="text-center py-16 text-muted-foreground">
+              Connecting to Firebase...
+            </div>
           ) : filteredDevices.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -83,7 +107,9 @@ export function DevicesPage() {
               </div>
               <h3 className="text-xl mb-2">No Devices Found</h3>
               <p className="text-muted-foreground mb-6">
-                {searchQuery ? "Try adjusting your search" : "No Firebase records yet"}
+                {searchQuery
+                  ? "Try adjusting your search"
+                  : "No Firebase records yet"}
               </p>
               {!searchQuery && (
                 <button
@@ -113,7 +139,9 @@ export function DevicesPage() {
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                     <div
                       className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${
-                        device.status === "offline" ? "bg-status-offline/20" : "bg-primary/10"
+                        device.status === "offline"
+                          ? "bg-status-offline/20"
+                          : "bg-primary/10"
                       }`}
                     >
                       {device.status === "offline" ? (
@@ -127,10 +155,12 @@ export function DevicesPage() {
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between mb-2">
                         <div className="min-w-0">
                           <h4 className="mb-1 truncate">{device.name}</h4>
-                          <p className="text-sm text-muted-foreground break-words">{device.location}</p>
+                          <p className="text-sm text-muted-foreground break-words">
+                            {device.location}
+                          </p>
                         </div>
                         <div
-                          className={`text-sm px-3 py-1 rounded-lg inline-flex self-start ${
+                          className={`text-sm px-3 py-1 rounded-lg inline-flex self-start shrink-0 ${
                             device.status === "offline"
                               ? "bg-status-offline/20 text-status-offline"
                               : "bg-status-safe/20 text-status-safe"
@@ -148,29 +178,33 @@ export function DevicesPage() {
                             <WifiOff className="w-4 h-4 text-status-offline" />
                           )}
                           <span className="text-muted-foreground">
-                            {device.status === "online" ? `${toSignalStrength(device.rssi)}%` : "Offline"}
+                            {device.status === "online"
+                              ? `${toSignalStrength(device.rssi)}%`
+                              : "Offline"}
                           </span>
                         </div>
-
-                        <div className="hidden sm:block text-muted-foreground">•</div>
-                        <span className="text-muted-foreground">{device.monitoring ? "Monitoring Active" : "Monitoring Off"}</span>
-                      </div>
-
-                      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-xs text-muted-foreground">
-                        <span className="break-words">{device.info?.device_type ?? device.deviceType ?? "Unknown type"}</span>
-                        <span className="break-words">
-                          {device.sensor?.laser === "BLOCKED"
-                            ? "Laser blocked"
-                            : device.laserOn
-                            ? "Laser enabled"
-                            : "Laser clear"}
+                        <div className="hidden sm:block text-muted-foreground">
+                          •
+                        </div>
+                        <span className="text-muted-foreground">
+                          {device.monitoring
+                            ? "Monitoring Active"
+                            : "Monitoring Off"}
                         </span>
                       </div>
 
-                      <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-xs text-muted-foreground">
-                        <span className="break-words">Heap: {device.freeHeap ?? device.freeheap}</span>
+                      <div className="mt-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between text-xs text-muted-foreground">
                         <span className="break-words">
-                          {device.schedule ? "Schedule set" : `Uptime: ${device.uptimeSec ?? device.uptime} sec`}
+                          {device.info?.device_type ??
+                            device.deviceType ??
+                            "Unknown type"}
+                        </span>
+                        <span>
+                          {device.sensor?.laser === "BLOCKED"
+                            ? "⚠ Laser blocked"
+                            : device.laserOn
+                            ? "Laser enabled"
+                            : "Laser clear"}
                         </span>
                       </div>
                     </div>
@@ -179,15 +213,17 @@ export function DevicesPage() {
               ))}
             </div>
           )}
-
-          <button
-            onClick={() => navigate("/devices/add")}
-            className="fixed bottom-24 right-6 bg-primary text-primary-foreground w-14 h-14 rounded-full shadow-lg shadow-primary/30 flex items-center justify-center hover:scale-110 transition-transform"
-          >
-            <Plus className="w-6 h-6" />
-          </button>
         </div>
       </div>
+      
+
+      {/* FAB */}
+      <button
+        onClick={() => navigate("/devices/add")}
+        className="fixed bottom-24 right-6 bg-primary text-primary-foreground w-14 h-14 rounded-full shadow-lg shadow-primary/30 flex items-center justify-center hover:scale-110 transition-transform z-10"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
     </div>
   );
 }

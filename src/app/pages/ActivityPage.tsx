@@ -1,23 +1,42 @@
-import { useState } from "react";
-import { Search, AlertTriangle, Shield, Activity as ActivityIcon, Wifi, WifiOff, User } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Search, AlertTriangle, Shield, Activity as ActivityIcon, WifiOff, User } from "lucide-react";
 import { motion } from "motion/react";
 import { useFirebaseDevices } from "../../hooks/useFirebaseDevices";
 import { useFirebaseActivity } from "../../hooks/useFirebaseActivity";
+import { usePullToRefresh, PullIndicator, SafeTopSpacer } from "../../hooks/usePullToRefresh";
 
 type FilterType = "today" | "alerts" | "devices" | "all";
 
 export function ActivityPage() {
   const [filter, setFilter] = useState<FilterType>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
+
   const { devices, loading: devicesLoading, error: deviceError } = useFirebaseDevices();
   const { activities, loading: activityLoading, error: activityError } = useFirebaseActivity(devices);
 
+  // ── Pull-to-refresh ────────────────────────────────────────────────────
+  const handleRefresh = useCallback(async () => {
+    // Firebase subscriptions are real-time; a brief wait gives visual feedback
+    await new Promise((res) => setTimeout(res, 800));
+    setRefreshKey((k) => k + 1);
+  }, []);
+
+  const { refreshing, pullDistance, threshold, touchHandlers } =
+    usePullToRefresh(handleRefresh);
+
+  // ── Filtering ──────────────────────────────────────────────────────────
   const filteredActivities = activities
     .filter((activity) => {
       if (filter === "all") return true;
       if (filter === "today") return true;
       if (filter === "alerts") return activity.severity === "critical";
-      if (filter === "devices") return activity.type === "success" || activity.type === "offline" || activity.type === "sensor";
+      if (filter === "devices")
+        return (
+          activity.type === "success" ||
+          activity.type === "offline" ||
+          activity.type === "sensor"
+        );
       return true;
     })
     .filter(
@@ -29,7 +48,6 @@ export function ActivityPage() {
   const getIcon = (type: string) => {
     switch (type) {
       case "alert":
-        return <AlertTriangle className="w-5 h-5" />;
       case "warning":
         return <AlertTriangle className="w-5 h-5" />;
       case "sensor":
@@ -59,12 +77,28 @@ export function ActivityPage() {
   };
 
   return (
-    <div className="min-h-dvh bg-background pb-28 sm:pb-32">
+    <div
+      className="min-h-dvh bg-background pb-28 sm:pb-32"
+      {...touchHandlers}
+    >
+      {/* Status bar spacer */}
+      <SafeTopSpacer />
+
+      <PullIndicator
+        pullDistance={pullDistance}
+        refreshing={refreshing}
+        threshold={threshold}
+      />
+
       <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
-        <div className="py-6 sm:py-8 lg:py-10 space-y-6 lg:space-y-8">
+        <div className="pt-4 pb-6 space-y-6 lg:space-y-8">
           <div className="flex flex-col gap-2">
-            <h1 className="text-3xl sm:text-4xl mb-0">History User & Alat</h1>
-            <p className="text-muted-foreground">Monitor user actions and device events in one timeline</p>
+            <h1 className="text-3xl sm:text-4xl mb-0 leading-tight">
+              History User & Alat
+            </h1>
+            <p className="text-muted-foreground">
+              Monitor user actions and device events in one timeline
+            </p>
           </div>
 
           <div className="relative">
@@ -79,19 +113,21 @@ export function ActivityPage() {
           </div>
 
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0">
-            {(["today", "alerts", "devices", "all"] as FilterType[]).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-4 py-2 rounded-xl text-sm whitespace-nowrap transition-all ${
-                  filter === f
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-card border border-border hover:bg-accent"
-                }`}
-              >
-                {f.charAt(0).toUpperCase() + f.slice(1)}
-              </button>
-            ))}
+            {(["today", "alerts", "devices", "all"] as FilterType[]).map(
+              (f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`px-4 py-2 rounded-xl text-sm whitespace-nowrap transition-all ${
+                    filter === f
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-card border border-border hover:bg-accent"
+                  }`}
+                >
+                  {f.charAt(0).toUpperCase() + f.slice(1)}
+                </button>
+              )
+            )}
           </div>
 
           {deviceError || activityError ? (
@@ -120,7 +156,7 @@ export function ActivityPage() {
             <div className="space-y-3">
               {filteredActivities.map((activity, index) => (
                 <motion.div
-                  key={activity.id}
+                  key={`${activity.id}-${refreshKey}`}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.05 * index }}
