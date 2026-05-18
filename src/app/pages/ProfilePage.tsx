@@ -1,15 +1,7 @@
 import { useNavigate } from "react-router";
 import {
-  Bell,
-  Shield,
-  Moon,
-  Lock,
-  User,
-  LogOut,
-  ChevronRight,
-  Vibrate,
-  Volume2,
-  RefreshCw,
+  Bell, Shield, Moon, Lock, User, LogOut, ChevronRight,
+  Vibrate, Volume2, RefreshCw,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useRef, useCallback } from "react";
@@ -26,9 +18,8 @@ type PreferenceState = {
 };
 
 const loadPreferences = (): PreferenceState => {
-  if (typeof window === "undefined") {
+  if (typeof window === "undefined")
     return { sound: true, vibration: true, pushNotifications: true };
-  }
   try {
     const raw = window.localStorage.getItem(preferenceStorageKey);
     if (!raw) return { sound: true, vibration: true, pushNotifications: true };
@@ -46,29 +37,26 @@ const loadPreferences = (): PreferenceState => {
 const savePreferences = (next: Partial<PreferenceState>) => {
   if (typeof window === "undefined") return;
   const current = loadPreferences();
-  const updated: PreferenceState = { ...current, ...next };
-  window.localStorage.setItem(preferenceStorageKey, JSON.stringify(updated));
+  window.localStorage.setItem(
+    preferenceStorageKey,
+    JSON.stringify({ ...current, ...next })
+  );
 };
 
-// ── Inline Toggle Component ────────────────────────────────────────────────
-function Toggle({
-  value,
-  onChange,
-}: {
-  value: boolean;
-  onChange: () => void;
-}) {
+// ★ KEY FIX: guaranteed minimum padding even if env() returns 0
+const SAFE_TOP_STYLE = {
+  paddingTop: "max(env(safe-area-inset-top, 0px), 3rem)",
+};
+
+function Toggle({ value, onChange }: { value: boolean; onChange: () => void }) {
   return (
     <button
-      onClick={(e) => {
-        e.stopPropagation();
-        onChange();
-      }}
+      onClick={(e) => { e.stopPropagation(); onChange(); }}
       className={`relative w-12 h-6 rounded-full transition-colors duration-200 shrink-0 ${
         value ? "bg-primary" : "bg-muted"
       }`}
-      aria-checked={value}
       role="switch"
+      aria-checked={value}
     >
       <motion.div
         animate={{ x: value ? 24 : 2 }}
@@ -79,37 +67,28 @@ function Toggle({
   );
 }
 
-// ── Logout Confirmation Dialog ─────────────────────────────────────────────
 function LogoutDialog({
-  open,
-  onConfirm,
-  onCancel,
-}: {
-  open: boolean;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
+  open, onConfirm, onCancel,
+}: { open: boolean; onConfirm: () => void; onCancel: () => void; }) {
   return (
     <AnimatePresence>
       {open && (
         <>
-          {/* Backdrop */}
           <motion.div
             key="backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm"
             onClick={onCancel}
           />
-          {/* Dialog — centered via fixed + transform */}
           <motion.div
             key="dialog"
             initial={{ opacity: 0, scale: 0.85, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.85, y: 20 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-sm bg-card border border-border rounded-2xl p-6 shadow-xl"
+            className="fixed z-[101] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-sm bg-card border border-border rounded-2xl p-6 shadow-2xl"
           >
             <div className="w-12 h-12 mx-auto mb-4 bg-destructive/10 rounded-2xl flex items-center justify-center">
               <LogOut className="w-6 h-6 text-destructive" />
@@ -139,19 +118,11 @@ function LogoutDialog({
   );
 }
 
-// ── Pull-to-Refresh Indicator ──────────────────────────────────────────────
 function PullIndicator({
-  pullDistance,
-  refreshing,
-  threshold,
-}: {
-  pullDistance: number;
-  refreshing: boolean;
-  threshold: number;
-}) {
+  pullDistance, refreshing, threshold,
+}: { pullDistance: number; refreshing: boolean; threshold: number; }) {
   const progress = Math.min(pullDistance / threshold, 1);
   const triggered = pullDistance >= threshold;
-
   return (
     <AnimatePresence>
       {(pullDistance > 5 || refreshing) && (
@@ -159,7 +130,7 @@ function PullIndicator({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="flex items-center justify-center pt-2 pb-0"
+          className="flex items-center justify-center pt-2"
           style={{ height: refreshing ? 44 : Math.max(pullDistance * 0.5, 0) }}
         >
           <motion.div
@@ -181,7 +152,6 @@ function PullIndicator({
   );
 }
 
-// ── Main Component ─────────────────────────────────────────────────────────
 export function ProfilePage() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useAppTheme();
@@ -194,20 +164,17 @@ export function ProfilePage() {
   const [vibration, setVibration] = useState(() => loadPreferences().vibration);
   const isDarkTheme = theme === "dark";
 
-  // FIX 1 — Pull-to-refresh state
   const [refreshing, setRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const touchStartY = useRef(0);
   const PULL_THRESHOLD = 70;
 
-  // FIX 3 — Logout confirmation dialog
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const displayName =
     user?.displayName ?? user?.email?.split("@")[0] ?? "SecureSense User";
   const displayEmail = user?.email ?? "No Firebase account";
 
-  // FIX 1 — Refresh handler
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await new Promise((res) => setTimeout(res, 900));
@@ -217,31 +184,24 @@ export function ProfilePage() {
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
   };
-
   const handleTouchMove = (e: React.TouchEvent) => {
     if (window.scrollY > 0) return;
     const distance = e.touches[0].clientY - touchStartY.current;
     if (distance > 0) setPullDistance(Math.min(distance, PULL_THRESHOLD * 1.5));
   };
-
   const handleTouchEnd = async () => {
-    if (pullDistance >= PULL_THRESHOLD && !refreshing) {
-      await handleRefresh();
-    }
+    if (pullDistance >= PULL_THRESHOLD && !refreshing) await handleRefresh();
     setPullDistance(0);
   };
 
-  // FIX 3 — Logout
   const handleLogout = async () => {
     await signOutCurrentUser();
     navigate("/login");
   };
 
-  // FIX 4 — Settings items: Notifications & Appearance get toggles; rest keep chevron
   const settingsItems = [
     {
-      icon: Bell,
-      label: "Notifications",
+      icon: Bell, label: "Notifications",
       toggle: {
         value: pushNotifications,
         onChange: () =>
@@ -253,12 +213,8 @@ export function ProfilePage() {
       },
     },
     {
-      icon: Moon,
-      label: "Appearance",
-      toggle: {
-        value: isDarkTheme,
-        onChange: toggleTheme,
-      },
+      icon: Moon, label: "Appearance",
+      toggle: { value: isDarkTheme, onChange: toggleTheme },
     },
     { icon: Lock, label: "Security", path: "/settings/security" },
     { icon: Shield, label: "Connected Devices", path: "/devices" },
@@ -267,7 +223,6 @@ export function ProfilePage() {
 
   return (
     <>
-      {/* FIX 3 — Centered logout dialog */}
       <LogoutDialog
         open={showLogoutDialog}
         onConfirm={handleLogout}
@@ -280,7 +235,9 @@ export function ProfilePage() {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* FIX 1 — Pull indicator */}
+        {/* ★ Status bar spacer — guaranteed minimum 3rem */}
+        <div style={SAFE_TOP_STYLE} />
+
         <PullIndicator
           pullDistance={pullDistance}
           refreshing={refreshing}
@@ -288,23 +245,12 @@ export function ProfilePage() {
         />
 
         <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
-          {/* FIX 2 — Safe area padding so header doesn't clip under status bar */}
-          <div
-            className="space-y-6 lg:space-y-8 pb-4"
-            style={{
-              paddingTop:
-                "calc(env(safe-area-inset-top, 0px) + 1.5rem)",
-            }}
-          >
-            {/* Header */}
+          <div className="space-y-6 lg:space-y-8 pt-4 pb-4">
             <div className="flex flex-col gap-2">
-              <h1 className="text-3xl sm:text-4xl mb-0">Profile</h1>
-              <p className="text-muted-foreground">
-                Manage your account settings
-              </p>
+              <h1 className="text-3xl sm:text-4xl mb-0 leading-tight">Profile</h1>
+              <p className="text-muted-foreground">Manage your account settings</p>
             </div>
 
-            {/* User card */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -316,46 +262,31 @@ export function ProfilePage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-xl mb-1 break-words">{displayName}</h3>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {displayEmail}
-                  </p>
+                  <p className="text-sm text-muted-foreground mb-2">{displayEmail}</p>
                 </div>
               </div>
             </motion.div>
 
-            {/* FIX 4 — SETTINGS section with toggles for Notifications & Appearance */}
             <div>
-              <h3 className="text-sm text-muted-foreground mb-3 px-2">
-                SETTINGS
-              </h3>
+              <h3 className="text-sm text-muted-foreground mb-3 px-2">SETTINGS</h3>
               <div className="bg-card border border-border rounded-2xl overflow-hidden">
                 {settingsItems.map((item, index) => {
                   const hasToggle = "toggle" in item;
                   const hasPath = "path" in item;
-
                   return (
                     <div
                       key={index}
-                      onClick={() => {
-                        if (hasPath) navigate(item.path);
-                      }}
+                      onClick={() => { if (hasPath) navigate(item.path); }}
                       className={`w-full flex items-center gap-4 px-4 py-4 transition-colors border-b border-border last:border-b-0 ${
-                        hasPath
-                          ? "cursor-pointer hover:bg-accent"
-                          : "cursor-default"
+                        hasPath ? "cursor-pointer hover:bg-accent" : "cursor-default"
                       }`}
                     >
                       <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
                         <item.icon className="w-5 h-5 text-primary" />
                       </div>
-                      <span className="flex-1 min-w-0 text-left">
-                        {item.label}
-                      </span>
+                      <span className="flex-1 min-w-0 text-left">{item.label}</span>
                       {hasToggle ? (
-                        <Toggle
-                          value={item.toggle.value}
-                          onChange={item.toggle.onChange}
-                        />
+                        <Toggle value={item.toggle.value} onChange={item.toggle.onChange} />
                       ) : (
                         <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
                       )}
@@ -365,13 +296,9 @@ export function ProfilePage() {
               </div>
             </div>
 
-            {/* APP SETTINGS — Sound & Vibration toggles */}
             <div>
-              <h3 className="text-sm text-muted-foreground mb-3 px-2">
-                APP SETTINGS
-              </h3>
+              <h3 className="text-sm text-muted-foreground mb-3 px-2">APP SETTINGS</h3>
               <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 space-y-4">
-                {/* Sound */}
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
@@ -379,24 +306,19 @@ export function ProfilePage() {
                     </div>
                     <div className="min-w-0">
                       <p>Sound</p>
-                      <p className="text-sm text-muted-foreground">
-                        Alert sound effects
-                      </p>
+                      <p className="text-sm text-muted-foreground">Alert sound effects</p>
                     </div>
                   </div>
                   <Toggle
                     value={sound}
-                    onChange={() =>
-                      setSound((cur) => {
-                        const next = !cur;
-                        savePreferences({ sound: next });
-                        return next;
-                      })
-                    }
+                    onChange={() => setSound((cur) => {
+                      const next = !cur;
+                      savePreferences({ sound: next });
+                      return next;
+                    })}
                   />
                 </div>
 
-                {/* Vibration */}
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
@@ -404,26 +326,21 @@ export function ProfilePage() {
                     </div>
                     <div className="min-w-0">
                       <p>Vibration</p>
-                      <p className="text-sm text-muted-foreground">
-                        Haptic feedback
-                      </p>
+                      <p className="text-sm text-muted-foreground">Haptic feedback</p>
                     </div>
                   </div>
                   <Toggle
                     value={vibration}
-                    onChange={() =>
-                      setVibration((cur) => {
-                        const next = !cur;
-                        savePreferences({ vibration: next });
-                        return next;
-                      })
-                    }
+                    onChange={() => setVibration((cur) => {
+                      const next = !cur;
+                      savePreferences({ vibration: next });
+                      return next;
+                    })}
                   />
                 </div>
               </div>
             </div>
 
-            {/* FIX 3 — Logout button now opens centered dialog */}
             <button
               onClick={() => setShowLogoutDialog(true)}
               className="w-full bg-destructive/10 text-destructive border border-destructive/30 py-3 rounded-xl hover:bg-destructive/20 transition-all flex items-center justify-center gap-2"

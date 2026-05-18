@@ -5,31 +5,20 @@ import { useFirebaseDevices } from "../../hooks/useFirebaseDevices";
 import { useFirebaseAuth } from "../../hooks/useFirebaseAuth";
 
 const formatLastSeen = (timestamp?: number) => {
-  if (!timestamp) {
-    return "Unknown";
-  }
-
+  if (!timestamp) return "Unknown";
   const elapsed = Date.now() - timestamp;
-
-  if (elapsed < 60_000) {
-    return "Just now";
-  }
-
+  if (elapsed < 60_000) return "Just now";
   const minutes = Math.floor(elapsed / 60_000);
-
-  if (minutes < 60) {
-    return `${minutes} min ago`;
-  }
-
+  if (minutes < 60) return `${minutes} min ago`;
   const hours = Math.floor(minutes / 60);
-
-  if (hours < 24) {
-    return `${hours} hour${hours === 1 ? "" : "s"} ago`;
-  }
-
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
   const days = Math.floor(hours / 24);
-
   return `${days} day${days === 1 ? "" : "s"} ago`;
+};
+
+// ★ Status bar safe area — guaranteed minimum 3rem
+const SAFE_TOP_STYLE = {
+  paddingTop: "max(env(safe-area-inset-top, 0px), 3rem)",
 };
 
 export function Dashboard() {
@@ -49,8 +38,11 @@ export function Dashboard() {
 
   return (
     <div className="min-h-dvh bg-background pb-28 sm:pb-32">
+      {/* ★ Status bar spacer */}
+      <div style={SAFE_TOP_STYLE} />
+
       <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
-        <div className="py-6 sm:py-8 lg:py-10 space-y-6 lg:space-y-8">
+        <div className="pt-4 pb-6 space-y-6 lg:space-y-8">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <p className="text-muted-foreground mb-1 text-sm sm:text-base">
