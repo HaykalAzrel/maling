@@ -3,20 +3,3 @@
 
 @import 'tw-animate-css';
 
-@layer utilities {
-  /* Minimum 3rem (48px) padding top, atau lebih besar kalau ada notch */
-  .safe-top {
-    padding-top: max(env(safe-area-inset-top, 0px), 3rem);
-  }
- 
-  /* Buat bottom nav: minimum 1rem, atau lebih kalau ada home indicator iOS */
-  .safe-bottom {
-    padding-bottom: max(env(safe-area-inset-bottom, 0px), 1rem);
-  }
- 
-  /* Combined: untuk container utama */
-  .safe-y {
-    padding-top: max(env(safe-area-inset-top, 0px), 3rem);
-    padding-bottom: max(env(safe-area-inset-bottom, 0px), 1rem);
-  }
-}
