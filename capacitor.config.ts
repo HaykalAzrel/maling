@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Deteksi Maling',
   webDir: 'dist',
   server: {
-    url: 'https://secure-sense.netlify.app',
+    url: 'https://maling-git-main-chelixs-projects.vercel.app',
     cleartext: true
   },
   plugins: {
