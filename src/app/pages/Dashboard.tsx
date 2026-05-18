@@ -45,14 +45,13 @@ export function Dashboard() {
   const onlineDevices = devices.filter((device) => device.status === "online");
   const offlineDevices = devices.filter((device) => device.status === "offline");
   const monitoringDevices = devices.filter((device) => device.monitoring);
-  const health = devices.length ? Math.round((onlineDevices.length / devices.length) * 100) : 0;
   const visibleDevices = devices.slice(0, 4);
 
   return (
     <div className="min-h-dvh bg-background pb-28 sm:pb-32">
       <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <div className="py-6 sm:py-8 lg:py-10 space-y-6 lg:space-y-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <p className="text-muted-foreground mb-1 text-sm sm:text-base">
                 {greeting}, {displayName}
@@ -65,7 +64,7 @@ export function Dashboard() {
                 })}
               </p>
             </div>
-            <div className="flex items-center justify-end gap-3 sm:justify-end self-end sm:self-auto">
+            <div className="flex items-center justify-end gap-3">
               <motion.div
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
@@ -80,7 +79,10 @@ export function Dashboard() {
                   <span className="absolute top-1 right-1 w-2 h-2 bg-status-warning rounded-full" />
                 )}
               </button>
-              <button className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
+              <button
+                onClick={() => navigate("/profile")}
+                className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20"
+              >
                 <span className="text-lg">👤</span>
               </button>
             </div>
@@ -129,7 +131,7 @@ export function Dashboard() {
               </div>
             </motion.div>
 
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-2">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -150,28 +152,6 @@ export function Dashboard() {
                 <AlertTriangle className="w-6 h-6 text-status-warning mb-3" />
                 <div className="text-2xl mb-1">{offlineDevices.length}</div>
                 <div className="text-sm text-muted-foreground">Offline Devices</div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3 }}
-                className="bg-card border border-border rounded-xl p-4 sm:p-5"
-              >
-                <Activity className="w-6 h-6 text-primary mb-3" />
-                <div className="text-2xl mb-1">{monitoringDevices.length}</div>
-                <div className="text-sm text-muted-foreground">Monitoring</div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.4 }}
-                className="bg-card border border-border rounded-xl p-4 sm:p-5"
-              >
-                <Shield className="w-6 h-6 text-status-safe mb-3" />
-                <div className="text-2xl mb-1">{health}%</div>
-                <div className="text-sm text-muted-foreground">Health</div>
               </motion.div>
             </div>
           </div>

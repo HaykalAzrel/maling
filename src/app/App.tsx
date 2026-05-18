@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { toast } from "sonner";
 import { AlertTriangle, Bell, CircleCheckBig, ShieldAlert, X } from "lucide-react";
+import { Haptics } from "@capacitor/haptics";
 import { SplashScreen } from "./pages/SplashScreen";
 import { OnboardingScreen } from "./pages/OnboardingScreen";
 import { LoginPage } from "./pages/LoginPage";
@@ -26,6 +27,34 @@ import { useFirebaseAuth } from "../hooks/useFirebaseAuth";
 import { useFirebaseDevices } from "../hooks/useFirebaseDevices";
 import { useFirebaseActivity } from "../hooks/useFirebaseActivity";
 import type { ActivityItem } from "../hooks/useFirebaseActivity";
+import { requestNotificationPermission, showAlarmNotification } from "../services/notificationService";
+
+const preferenceStorageKey = "secureSense:preferences";
+
+const loadPreferences = () => {
+  if (typeof window === "undefined") {
+    return { sound: true, vibration: true, pushNotifications: true };
+  }
+
+  try {
+    const raw = window.localStorage.getItem(preferenceStorageKey);
+    if (!raw) {
+      return { sound: true, vibration: true, pushNotifications: true };
+    }
+    const parsed = JSON.parse(raw) as Partial<{
+      sound: boolean;
+      vibration: boolean;
+      pushNotifications: boolean;
+    }>;
+    return {
+      sound: parsed.sound ?? true,
+      vibration: parsed.vibration ?? true,
+      pushNotifications: parsed.pushNotifications ?? true,
+    };
+  } catch {
+    return { sound: true, vibration: true, pushNotifications: true };
+  }
+};
 
 type AlarmState = {
   id: string;
@@ -40,6 +69,7 @@ function AlarmToastBridge() {
   const { devices } = useFirebaseDevices();
   const { activities } = useFirebaseActivity(devices);
   const seenActivityIds = useRef<Set<string>>(new Set());
+  const notificationReady = useRef<boolean>(false);
   const [activeAlarm, setActiveAlarm] = useState<AlarmState | null>(null);
 
   const blockedAlarm = useMemo(() => {
@@ -52,6 +82,23 @@ function AlarmToastBridge() {
 
     return blockedActivities[0] ?? null;
   }, [activities]);
+
+  useEffect(() => {
+    const ensurePermission = async () => {
+      if (notificationReady.current) {
+        return;
+      }
+
+      try {
+        const granted = await requestNotificationPermission();
+        notificationReady.current = Boolean(granted);
+      } catch {
+        notificationReady.current = false;
+      }
+    };
+
+    void ensurePermission();
+  }, []);
 
   useEffect(() => {
     const nextSeenIds = new Set(seenActivityIds.current);
@@ -73,6 +120,17 @@ function AlarmToastBridge() {
       toast.error(activity.title, {
         description: `${activity.device} • ${activity.time}`,
       });
+
+      const preferences = loadPreferences();
+      if (preferences.pushNotifications) {
+        void showAlarmNotification(activity.title, `${activity.device} • ${activity.time}`, {
+          sound: preferences.sound,
+        });
+      }
+
+      if (preferences.vibration) {
+        void Haptics.vibrate({ duration: 300 });
+      }
 
       setActiveAlarm((currentAlarm) => {
         if (currentAlarm?.id === activity.id) {
@@ -136,8 +194,8 @@ function AlarmToastBridge() {
     <Dialog open={Boolean(activeAlarm)} onOpenChange={(open) => !open && dismissAlarm()}>
       <DialogContent className="h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 rounded-none border-0 p-0 bg-[#09090b] text-white overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(239,68,68,0.38),transparent_45%),linear-gradient(180deg,rgba(127,29,29,0.92),rgba(9,9,11,0.98))]" />
-        <div className="relative z-10 flex h-full flex-col justify-between p-6 sm:p-10">
-          <DialogHeader className="text-left max-w-2xl space-y-4">
+        <div className="relative z-10 flex h-full flex-col items-center justify-center p-6 sm:p-10 text-center gap-8">
+          <DialogHeader className="text-center max-w-2xl space-y-4">
             <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl border border-white/15 bg-white/10 shadow-[0_0_50px_rgba(239,68,68,0.35)] backdrop-blur">
               <ShieldAlert className="h-8 w-8 text-red-300" />
             </div>
@@ -151,7 +209,7 @@ function AlarmToastBridge() {
             </div>
           </DialogHeader>
 
-          <div className="grid gap-4 sm:grid-cols-3 max-w-4xl">
+          <div className="grid gap-4 sm:grid-cols-3 max-w-4xl w-full">
             <div className="rounded-2xl border border-white/10 bg-white/8 p-5 backdrop-blur-sm">
               <p className="text-xs uppercase tracking-[0.3em] text-white/60 mb-2">Device</p>
               <p className="text-lg font-medium">{activeAlarm?.device ?? "Unknown device"}</p>
@@ -169,12 +227,12 @@ function AlarmToastBridge() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3 text-white/80">
+          <div className="flex flex-col gap-4 sm:items-center">
+            <div className="flex items-center gap-3 text-white/80 justify-center">
               <Bell className="h-5 w-5 text-red-300" />
               <span>Toast, notification, and full-screen alarm are active.</span>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex flex-col gap-3 sm:flex-row justify-center">
               <button
                 onClick={dismissAlarm}
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-5 py-3 font-medium text-white transition hover:bg-white/15"

@@ -7,8 +7,14 @@ export const requestNotificationPermission = async () => {
   return permission.display === 'granted';
 };
 
-export const showAlarmNotification = async (title: string, body: string) => {
+export const showAlarmNotification = async (
+  title: string,
+  body: string,
+  options?: { sound?: boolean }
+) => {
   if (!Capacitor.isNativePlatform()) return;
+
+  const sound = options?.sound === false ? undefined : "default";
 
   await LocalNotifications.schedule({
     notifications: [
@@ -16,7 +22,7 @@ export const showAlarmNotification = async (title: string, body: string) => {
         id: Math.floor(Date.now() / 1000),
         title: `🚨 ${title}`,
         body,
-        sound: 'default',
+        sound,
         actionTypeId: 'ALARM_ACTION',
         channelId: 'alarm-channel',
         ongoing: true,

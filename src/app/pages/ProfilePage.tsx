@@ -16,13 +16,56 @@ import { useAppTheme } from "../theme-provider";
 import { useFirebaseAuth } from "../../hooks/useFirebaseAuth";
 import { signOutCurrentUser } from "../../services/authService";
 
+const preferenceStorageKey = "secureSense:preferences";
+
+type PreferenceState = {
+  sound: boolean;
+  vibration: boolean;
+  pushNotifications: boolean;
+};
+
+const loadPreferences = (): PreferenceState => {
+  if (typeof window === "undefined") {
+    return { sound: true, vibration: true, pushNotifications: true };
+  }
+
+  try {
+    const raw = window.localStorage.getItem(preferenceStorageKey);
+    if (!raw) {
+      return { sound: true, vibration: true, pushNotifications: true };
+    }
+
+    const parsed = JSON.parse(raw) as Partial<PreferenceState>;
+    return {
+      sound: parsed.sound ?? true,
+      vibration: parsed.vibration ?? true,
+      pushNotifications: parsed.pushNotifications ?? true,
+    };
+  } catch {
+    return { sound: true, vibration: true, pushNotifications: true };
+  }
+};
+
+const savePreferences = (next: Partial<PreferenceState>) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const current = loadPreferences();
+  const updated: PreferenceState = {
+    ...current,
+    ...next,
+  };
+  window.localStorage.setItem(preferenceStorageKey, JSON.stringify(updated));
+};
+
 export function ProfilePage() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useAppTheme();
   const { user } = useFirebaseAuth();
-  const [pushNotifications, setPushNotifications] = useState(true);
-  const [sound, setSound] = useState(true);
-  const [vibration, setVibration] = useState(true);
+  const [pushNotifications, setPushNotifications] = useState(() => loadPreferences().pushNotifications);
+  const [sound, setSound] = useState(() => loadPreferences().sound);
+  const [vibration, setVibration] = useState(() => loadPreferences().vibration);
   const isDarkTheme = theme === "dark";
   const displayName = user?.displayName ?? user?.email?.split("@")[0] ?? "SecureSense User";
   const displayEmail = user?.email ?? "No Firebase account";
@@ -61,10 +104,6 @@ export function ProfilePage() {
               <div className="flex-1 min-w-0">
                 <h3 className="text-xl mb-1 break-words">{displayName}</h3>
                 <p className="text-sm text-muted-foreground mb-2">{displayEmail}</p>
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-status-safe/10 text-status-safe rounded-lg text-sm">
-                  <div className="w-2 h-2 rounded-full bg-status-safe" />
-                  Premium Account
-                </div>
               </div>
             </div>
           </motion.div>
@@ -132,7 +171,13 @@ export function ProfilePage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setPushNotifications(!pushNotifications)}
+                  onClick={() =>
+                    setPushNotifications((current) => {
+                      const next = !current;
+                      savePreferences({ pushNotifications: next });
+                      return next;
+                    })
+                  }
                   className={`w-12 h-6 rounded-full transition-colors ${
                     pushNotifications ? "bg-primary" : "bg-muted"
                   }`}
@@ -157,7 +202,13 @@ export function ProfilePage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setSound(!sound)}
+                  onClick={() =>
+                    setSound((current) => {
+                      const next = !current;
+                      savePreferences({ sound: next });
+                      return next;
+                    })
+                  }
                   className={`w-12 h-6 rounded-full transition-colors ${
                     sound ? "bg-primary" : "bg-muted"
                   }`}
@@ -182,7 +233,13 @@ export function ProfilePage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setVibration(!vibration)}
+                  onClick={() =>
+                    setVibration((current) => {
+                      const next = !current;
+                      savePreferences({ vibration: next });
+                      return next;
+                    })
+                  }
                   className={`w-12 h-6 rounded-full transition-colors ${
                     vibration ? "bg-primary" : "bg-muted"
                   }`}
