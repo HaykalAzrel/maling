@@ -1,8 +1,8 @@
 📁 /
     📁 app/
-        📄 App.tsx (0.0085 MB)
+        📄 App.tsx (0.0108 MB)
         📁 components/
-            📄 BottomNav.tsx (0.0037 MB)
+            📄 BottomNav.tsx (0.0034 MB)
             📁 figma/
                 📄 ImageWithFallback.tsx (0.0011 MB)
             📁 ui/
@@ -55,17 +55,17 @@
                 📄 use-mobile.ts (0.0006 MB)
                 📄 utils.ts (0.0002 MB)
         📁 pages/
-            📄 ActivityPage.tsx (0.0067 MB)
-            📄 AddDevicePage.tsx (0.0079 MB)
+            📄 ActivityPage.tsx (0.0069 MB)
+            📄 AddDevicePage.tsx (0.0115 MB)
             📄 Dashboard.tsx (0.0105 MB)
-            📄 DeviceDetailPage.tsx (0.027 MB)
-            📄 DevicesPage.tsx (0.0082 MB)
-            📄 LoginPage.tsx (0.0078 MB)
-            📄 NotificationsPage.tsx (0.0083 MB)
+            📄 DeviceDetailPage.tsx (0.0266 MB)
+            📄 DevicesPage.tsx (0.0086 MB)
+            📄 LoginPage.tsx (0.0076 MB)
+            📄 NotificationsPage.tsx (0.0086 MB)
             📄 OnboardingScreen.tsx (0.0033 MB)
-            📄 ProfilePage.tsx (0.0083 MB)
-            📄 RegisterPage.tsx (0.0101 MB)
-            📄 SplashScreen.tsx (0.0024 MB)
+            📄 ProfilePage.tsx (0.0102 MB)
+            📄 RegisterPage.tsx (0.0106 MB)
+            📄 SplashScreen.tsx (0.0025 MB)
         📄 theme-provider.tsx (0.0016 MB)
     📁 firebase/
         📄 config.ts (0.0011 MB)
@@ -78,13 +78,14 @@
             📄 iot-security-app-design.md (0.0076 MB)
     📄 main.py (0.0032 MB)
     📄 main.tsx (0.0013 MB)
-    📄 project_scan.json (0.0293 MB)
+    📄 project_scan.json (0.0298 MB)
+    📄 project_structure.txt (0.004 MB)
     📁 services/
         📄 activityHistoryService.ts (0.0032 MB)
         📄 alertService.ts (0.0073 MB)
         📄 authService.ts (0.0021 MB)
-        📄 deviceService.ts (0.01 MB)
-        📄 notificationService.ts (0.0012 MB)
+        📄 deviceService.ts (0.0106 MB)
+        📄 notificationService.ts (0.0013 MB)
         📄 sensorService.ts (0.0018 MB)
     📁 store/
         📄 deviceStore.ts (0.0003 MB)

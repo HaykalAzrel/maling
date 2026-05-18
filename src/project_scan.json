@@ -10,7 +10,7 @@
                     "name": "App.tsx",
                     "type": "file",
                     "extension": ".tsx",
-                    "size_mb": 0.0085,
+                    "size_mb": 0.0108,
                     "path": "./app\\App.tsx"
                 },
                 {
@@ -21,7 +21,7 @@
                             "name": "BottomNav.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0037,
+                            "size_mb": 0.0034,
                             "path": "./app\\components\\BottomNav.tsx"
                         },
                         {
@@ -389,14 +389,14 @@
                             "name": "ActivityPage.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0067,
+                            "size_mb": 0.0069,
                             "path": "./app\\pages\\ActivityPage.tsx"
                         },
                         {
                             "name": "AddDevicePage.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0079,
+                            "size_mb": 0.0115,
                             "path": "./app\\pages\\AddDevicePage.tsx"
                         },
                         {
@@ -410,28 +410,28 @@
                             "name": "DeviceDetailPage.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.027,
+                            "size_mb": 0.0266,
                             "path": "./app\\pages\\DeviceDetailPage.tsx"
                         },
                         {
                             "name": "DevicesPage.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0082,
+                            "size_mb": 0.0086,
                             "path": "./app\\pages\\DevicesPage.tsx"
                         },
                         {
                             "name": "LoginPage.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0078,
+                            "size_mb": 0.0076,
                             "path": "./app\\pages\\LoginPage.tsx"
                         },
                         {
                             "name": "NotificationsPage.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0083,
+                            "size_mb": 0.0086,
                             "path": "./app\\pages\\NotificationsPage.tsx"
                         },
                         {
@@ -445,21 +445,21 @@
                             "name": "ProfilePage.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0083,
+                            "size_mb": 0.0102,
                             "path": "./app\\pages\\ProfilePage.tsx"
                         },
                         {
                             "name": "RegisterPage.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0101,
+                            "size_mb": 0.0106,
                             "path": "./app\\pages\\RegisterPage.tsx"
                         },
                         {
                             "name": "SplashScreen.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0024,
+                            "size_mb": 0.0025,
                             "path": "./app\\pages\\SplashScreen.tsx"
                         }
                     ]
@@ -550,8 +550,15 @@
             "name": "project_scan.json",
             "type": "file",
             "extension": ".json",
-            "size_mb": 0.0293,
+            "size_mb": 0.0298,
             "path": "./project_scan.json"
+        },
+        {
+            "name": "project_structure.txt",
+            "type": "file",
+            "extension": ".txt",
+            "size_mb": 0.004,
+            "path": "./project_structure.txt"
         },
         {
             "name": "services",
@@ -582,14 +589,14 @@
                     "name": "deviceService.ts",
                     "type": "file",
                     "extension": ".ts",
-                    "size_mb": 0.01,
+                    "size_mb": 0.0106,
                     "path": "./services\\deviceService.ts"
                 },
                 {
                     "name": "notificationService.ts",
                     "type": "file",
                     "extension": ".ts",
-                    "size_mb": 0.0012,
+                    "size_mb": 0.0013,
                     "path": "./services\\notificationService.ts"
                 },
                 {
