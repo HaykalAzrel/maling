@@ -2,16 +2,23 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Shield } from "lucide-react";
 import { motion } from "motion/react";
+import { useFirebaseAuth } from "../../hooks/useFirebaseAuth";
 
 export function SplashScreen() {
   const navigate = useNavigate();
+  const { isAuthenticated, loading } = useFirebaseAuth();
 
   useEffect(() => {
+    if (loading) {
+      return;
+    }
+
     const timer = setTimeout(() => {
-      navigate("/onboarding");
+      navigate(isAuthenticated ? "/dashboard" : "/login");
     }, 3000);
+
     return () => clearTimeout(timer);
-  }, [navigate]);
+  }, [navigate, isAuthenticated, loading]);
 
   return (
     <div className="min-h-dvh bg-gradient-to-br from-background via-[#0f1421] to-background flex items-center justify-center relative overflow-hidden px-4 sm:px-6">
@@ -37,8 +44,8 @@ export function SplashScreen() {
           <Shield className="w-14 h-14 sm:w-16 sm:h-16 text-primary" />
         </motion.div>
 
-        <h1 className="text-3xl sm:text-4xl mb-2 tracking-tight">SecureSense</h1>
-        <p className="text-muted-foreground text-base sm:text-lg">Smart IoT Security Monitoring</p>
+        <h1 className="text-3xl sm:text-4xl mb-2 tracking-tight">Home Security</h1>
+        <p className="text-muted-foreground text-base sm:text-lg">Smart IoT Home Security</p>
 
         <motion.div
           className="mt-12 flex gap-2 justify-center"

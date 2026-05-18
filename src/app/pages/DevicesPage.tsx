@@ -215,7 +215,7 @@ export function DevicesPage() {
           )}
         </div>
       </div>
-      
+
 
       {/* FAB */}
       <button

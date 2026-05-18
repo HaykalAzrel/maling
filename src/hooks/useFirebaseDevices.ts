@@ -12,6 +12,7 @@ export function useFirebaseDevices(deviceIds?: string[]) {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Stabilize setDevices in a ref
   const setDevicesRef = useRef(setDevices);
@@ -124,7 +125,7 @@ export function useFirebaseDevices(deviceIds?: string[]) {
         if (typeof unsubscribe === "function") unsubscribe();
       });
     };
-  }, [user?.uid, deviceIdsKey]);
+  }, [user?.uid, deviceIdsKey, refreshKey]);
 
   const devices = useMemo(
     () =>
@@ -135,11 +136,19 @@ export function useFirebaseDevices(deviceIds?: string[]) {
     [deviceMap]
   );
 
+  const refreshDevices = () => {
+    setLoading(true);
+    setError(null);
+    setDevicesRef.current({});
+    setRefreshKey((current) => current + 1);
+  };
+
   return {
     devices,
     deviceMap,
     loading,
     error,
     firebaseReady: Boolean(isFirebaseConfigured),
+    refreshDevices,
   };
 }

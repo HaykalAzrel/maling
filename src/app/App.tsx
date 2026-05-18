@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { AlertTriangle, Bell, CircleCheckBig, ShieldAlert, X } from "lucide-react";
 import { Haptics } from "@capacitor/haptics";
 import { SplashScreen } from "./pages/SplashScreen";
-import { OnboardingScreen } from "./pages/OnboardingScreen";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { Dashboard } from "./pages/Dashboard";
@@ -70,14 +69,16 @@ function AlarmToastBridge() {
   const { activities } = useFirebaseActivity(devices);
   const seenActivityIds = useRef<Set<string>>(new Set());
   const notificationReady = useRef<boolean>(false);
+  const sessionStart = useRef(Date.now());
   const [activeAlarm, setActiveAlarm] = useState<AlarmState | null>(null);
 
   const blockedAlarm = useMemo(() => {
     const blockedActivities = activities.filter((activity) => {
       const isBlockedSensor = activity.type === "sensor" && activity.title.toLowerCase().includes("blocked");
       const isCriticalAlert = activity.type === "alert" && activity.severity === "critical";
+      const isRecent = activity.timestamp >= sessionStart.current;
 
-      return isBlockedSensor || isCriticalAlert;
+      return (isBlockedSensor || isCriticalAlert) && isRecent;
     });
 
     return blockedActivities[0] ?? null;
@@ -106,8 +107,9 @@ function AlarmToastBridge() {
     activities.forEach((activity) => {
       const isBlockedSensor = activity.type === "sensor" && activity.title.toLowerCase().includes("blocked");
       const isCriticalAlert = activity.type === "alert" && activity.severity === "critical";
+      const isRecent = activity.timestamp >= sessionStart.current;
 
-      if (!isBlockedSensor && !isCriticalAlert) {
+      if ((!isBlockedSensor && !isCriticalAlert) || !isRecent) {
         return;
       }
 
@@ -192,7 +194,7 @@ function AlarmToastBridge() {
 
   return (
     <Dialog open={Boolean(activeAlarm)} onOpenChange={(open) => !open && dismissAlarm()}>
-      <DialogContent className="h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 rounded-none border-0 p-0 bg-[#09090b] text-white overflow-hidden">
+      <DialogContent className="inset-0 top-0 left-0 h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 rounded-none border-0 p-0 bg-[#09090b] text-white overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(239,68,68,0.38),transparent_45%),linear-gradient(180deg,rgba(127,29,29,0.92),rgba(9,9,11,0.98))]" />
         <div className="relative z-10 flex h-full flex-col items-center justify-center p-6 sm:p-10 text-center gap-8">
           <DialogHeader className="text-center max-w-2xl space-y-4">
@@ -281,7 +283,6 @@ export default function App() {
       <div className="size-full min-h-screen bg-background text-foreground">
         <Routes>
           <Route path="/" element={<SplashScreen />} />
-          <Route path="/onboarding" element={<OnboardingScreen />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/dashboard" element={<ProtectedRoute><><Dashboard /><BottomNav /></></ProtectedRoute>} />

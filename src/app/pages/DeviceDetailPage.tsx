@@ -84,7 +84,7 @@ export function DeviceDetailPage() {
   const { refreshing, pullDistance, threshold, touchHandlers } =
     usePullToRefresh(handleRefresh);
 
-  // ── Toggle monitoring ─────────────────────────────────────────────────
+  // ── Toggle device ─────────────────────────────────────────────────
   const handleToggleMonitoring = async () => {
     if (!device || isTogglingPower || scheduleEnabled) return;
     setIsTogglingPower(true);
@@ -97,7 +97,7 @@ export function DeviceDetailPage() {
         severity: next ? "success" : "warning",
       });
     } catch (error) {
-      console.error("Failed to toggle monitoring:", error);
+      console.error("Failed to toggle device:", error);
     } finally {
       setIsTogglingPower(false);
     }
@@ -259,8 +259,8 @@ export function DeviceDetailPage() {
                   {device.status === "offline"
                     ? "Device Offline"
                     : effectiveMonitoringEnabled
-                    ? "Monitoring Active"
-                    : "Monitoring Inactive"}
+                    ? "Device Active"
+                    : "Device Inactive"}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {device.info?.device_type ?? device.deviceType ?? device.name}
@@ -284,7 +284,7 @@ export function DeviceDetailPage() {
               {/* Monitoring */}
               <div className="flex items-center justify-between gap-4">
                 <div className="min-w-0">
-                  <p>Monitoring</p>
+                  <p>Device Status</p>
                   <p className="text-sm text-muted-foreground">
                     {scheduleEnabled
                       ? "Controlled by schedule"
@@ -350,7 +350,7 @@ export function DeviceDetailPage() {
             </div>
 
             <p className="text-sm text-muted-foreground mb-4">
-              Set when monitoring should run and pause automatically.
+              Set when device should run and pause automatically.
             </p>
 
             <div className="flex items-center justify-between rounded-xl border border-border bg-background/60 px-4 py-3 mb-4 gap-4">

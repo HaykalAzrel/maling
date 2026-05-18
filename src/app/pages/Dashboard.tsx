@@ -1,8 +1,10 @@
-import { Bell, Shield, Wifi, Activity, AlertTriangle, Plus, RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useRef } from "react";
+import { Bell, Shield, Wifi, AlertTriangle, Plus } from "lucide-react";
 import { motion } from "motion/react";
 import { useNavigate } from "react-router";
 import { useFirebaseDevices } from "../../hooks/useFirebaseDevices";
 import { useFirebaseAuth } from "../../hooks/useFirebaseAuth";
+import { usePullToRefresh, PullIndicator, SafeTopSpacer } from "../../hooks/usePullToRefresh";
 
 const formatLastSeen = (timestamp?: number) => {
   if (!timestamp) return "Unknown";
@@ -16,15 +18,11 @@ const formatLastSeen = (timestamp?: number) => {
   return `${days} day${days === 1 ? "" : "s"} ago`;
 };
 
-// ★ Status bar safe area — guaranteed minimum 3rem
-const SAFE_TOP_STYLE = {
-  paddingTop: "max(env(safe-area-inset-top, 0px), 3rem)",
-};
-
 export function Dashboard() {
   const navigate = useNavigate();
-  const { devices, loading } = useFirebaseDevices();
+  const { devices, loading, refreshDevices } = useFirebaseDevices();
   const { user } = useFirebaseAuth();
+  const loadingRef = useRef(loading);
   const currentHour = new Date().getHours();
   const greeting =
     currentHour < 12 ? "Good Morning" : currentHour < 18 ? "Good Afternoon" : "Good Evening";
@@ -36,10 +34,38 @@ export function Dashboard() {
   const monitoringDevices = devices.filter((device) => device.monitoring);
   const visibleDevices = devices.slice(0, 4);
 
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
+
+  const handleRefresh = useCallback(async () => {
+    refreshDevices();
+
+    await new Promise<void>((resolve) => {
+      const start = Date.now();
+      const tick = () => {
+        if (!loadingRef.current || Date.now() - start > 2000) {
+          resolve();
+          return;
+        }
+        requestAnimationFrame(tick);
+      };
+      tick();
+    });
+  }, [refreshDevices]);
+
+  const { refreshing, pullDistance, threshold, touchHandlers } =
+    usePullToRefresh(handleRefresh);
+
   return (
-    <div className="min-h-dvh bg-background pb-28 sm:pb-32">
-      {/* ★ Status bar spacer */}
-      <div style={SAFE_TOP_STYLE} />
+    <div className="min-h-dvh bg-background pb-28 sm:pb-32" {...touchHandlers}>
+      <SafeTopSpacer />
+
+      <PullIndicator
+        pullDistance={pullDistance}
+        refreshing={refreshing}
+        threshold={threshold}
+      />
 
       <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <div className="pt-4 pb-6 space-y-6 lg:space-y-8">
@@ -119,7 +145,6 @@ export function Dashboard() {
               <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                 <span>{onlineDevices.length} devices online</span>
                 <span className="hidden sm:inline">•</span>
-                <span>{monitoringDevices.length} monitoring</span>
               </div>
             </motion.div>
 
@@ -151,9 +176,6 @@ export function Dashboard() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="text-lg sm:text-xl">Live Devices</h3>
             <div className="flex gap-2 self-start sm:self-auto">
-              <button className="p-2 hover:bg-accent rounded-lg transition-colors">
-                <RefreshCw className="w-5 h-5" />
-              </button>
               <button
                 onClick={() => navigate("/devices/add")}
                 className="p-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
@@ -217,7 +239,7 @@ export function Dashboard() {
                     <span className="min-w-0">
                       Type: <span className="text-foreground">{device.deviceType ?? device.name}</span>
                     </span>
-                    <span>{device.monitoring ? "Monitoring active" : "Monitoring off"}</span>
+                    <span>{device.monitoring ? "Device active" : "Device inactive"}</span>
                   </div>
 
                   <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-muted-foreground">

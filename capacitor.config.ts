@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Deteksi Maling',
   webDir: 'dist',
   server: {
-    url: 'https://maling-git-main-chelixs-projects.vercel.app',
+    url: 'https://webdashboardptapt.web.app',
     cleartext: true
   },
   plugins: {

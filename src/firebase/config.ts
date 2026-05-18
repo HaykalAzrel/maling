@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
-import { getAuth } from "firebase/auth";
+import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
@@ -25,6 +25,7 @@ if (isFirebaseConfigured) {
   const app = initializeApp(firebaseConfig);
   database = getDatabase(app);
   auth = getAuth(app);
+  void setPersistence(auth, browserLocalPersistence);
 }
 
 export { database, auth, isFirebaseConfigured };
