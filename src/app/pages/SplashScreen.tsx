@@ -21,8 +21,8 @@ export function SplashScreen() {
   }, [navigate, isAuthenticated, loading]);
 
   return (
-    <div className="min-h-dvh bg-gradient-to-br from-background via-[#0f1421] to-background flex items-center justify-center relative overflow-hidden px-4 sm:px-6">
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(79,124,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(79,124,255,0.03)_1px,transparent_1px)] bg-[size:50px_50px]" />
+    <div className="min-h-dvh flex items-center justify-center relative overflow-hidden px-4 sm:px-6" style={{ background: "#080d18" }}>
+      <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(79,124,255,0.12) 0%, transparent 70%)" }} />
 
       <motion.div
         initial={{ scale: 0.5, opacity: 0 }}
@@ -44,8 +44,10 @@ export function SplashScreen() {
           <Shield className="w-14 h-14 sm:w-16 sm:h-16 text-primary" />
         </motion.div>
 
-        <h1 className="text-3xl sm:text-4xl mb-2 tracking-tight">Home Security</h1>
-        <p className="text-muted-foreground text-base sm:text-lg">Smart IoT Home Security</p>
+        <h1 className="text-3xl sm:text-4xl mb-2 tracking-tight" style={{ color: "rgba(255,255,255,0.9)" }}>Securo</h1>
+        <p className="text-base sm:text-lg" style={{ color: "rgba(255,255,255,0.5)" }}>
+          Smart IoT Home Security
+        </p>
 
         <motion.div
           className="mt-12 flex gap-2 justify-center"

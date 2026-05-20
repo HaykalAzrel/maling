@@ -30,8 +30,8 @@ import { useFirebaseAuth } from "../hooks/useFirebaseAuth";
 import { useFirebaseDevices } from "../hooks/useFirebaseDevices";
 import { useFirebaseActivity } from "../hooks/useFirebaseActivity";
 import type { ActivityItem } from "../hooks/useFirebaseActivity";
-import { requestNotificationPermission, showAlarmNotification } from "../services/notificationService";
-import { registerFCMToken, setupForegroundMessaging } from "../services/fcmService";
+import { requestNotificationPermission, registerFCMToken, showAlarmNotification, setupNotificationChannels, cancelAllNotifications } from "../services/notificationService";
+import { setupForegroundMessaging } from "../services/fcmService";
 import { useUserAlertPreferences } from "../hooks/useUserAlertPreferences";
 
 const suppressAlertKey = "secureSense:suppressAlertsUntil";
@@ -116,7 +116,7 @@ const playPresetLoop = (
 function AlarmToastBridge() {
   const { devices } = useFirebaseDevices();
   const { activities } = useFirebaseActivity(devices);
-  const { preferences } = useUserAlertPreferences();
+  const { preferences, loading: preferencesLoading } = useUserAlertPreferences();
   const deviceById = useMemo(
     () => devices.reduce<Record<string, typeof devices[number]>>((accumulator, device) => {
       accumulator[device.id] = device;
@@ -131,6 +131,7 @@ function AlarmToastBridge() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [activeAlarm, setActiveAlarm] = useState<AlarmState | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null); // ✅ tambah ini
+  const { user } = useFirebaseAuth();
 
   const stopAudio = useCallback(() => {
     // ✅ Stop custom audio
@@ -159,6 +160,12 @@ function AlarmToastBridge() {
   }, [activities]);
 
   useEffect(() => {
+    if (user?.uid) {
+      void registerFCMToken(user.uid);
+    }
+  }, [user?.uid])
+
+  useEffect(() => {
     const ensurePermission = async () => {
       if (notificationReady.current) {
         return;
@@ -176,6 +183,8 @@ function AlarmToastBridge() {
       void ensurePermission();
     }
   }, [preferences.pushNotifications]);
+
+  
 
   const stopVibration = useCallback(() => {
     if (vibrationTimer.current) {
@@ -271,7 +280,10 @@ function AlarmToastBridge() {
     stopVibration();
     stopAudio();
 
-    if (!activeAlarm) return;
+    // Wait for Firebase preferences to finish loading so we use the saved ringtone,
+    // not the default. The alarm dialog is already visible; audio/vibration follow
+    // a fraction of a second later once the correct settings are confirmed.
+    if (!activeAlarm || preferencesLoading) return;
 
     if (preferences.vibrationMode && activeAlarm.notificationsEnabled) {
       startVibration(preferences.vibrationMode);
@@ -281,19 +293,24 @@ function AlarmToastBridge() {
       const ringtone = preferences.ringtone;
 
       if (ringtone.type === "custom" && ringtone.customDataUrl) {
-        // Custom upload
         const audio = new Audio(ringtone.customDataUrl);
         audio.loop = true;
         audioRef.current = audio;
         void audio.play().catch(() => undefined);
 
-      } else if (ringtone.type === "preset" || ringtone.type === "default") {
-        // ✅ Preset via Web Audio API
+      } else {
         const presetId =
           ringtone.name === "Siren" ? "siren"
           : ringtone.name === "Beacon" ? "beacon"
           : "default";
-        playPresetLoop(presetId, audioCtxRef);
+
+        const audio = new Audio(`/sounds/${presetId}.mp3`);
+        audio.loop = true;
+        audioRef.current = audio;
+        void audio.play().catch(() => {
+          audioRef.current = null;
+          playPresetLoop(presetId, audioCtxRef);
+        });
       }
     }
 
@@ -301,7 +318,7 @@ function AlarmToastBridge() {
       stopVibration();
       stopAudio();
     };
-  }, [activeAlarm, preferences.ringtone, preferences.soundEnabled, preferences.vibrationMode, startVibration, stopAudio, stopVibration]);
+  }, [activeAlarm, preferencesLoading, preferences.ringtone, preferences.soundEnabled, preferences.vibrationMode, startVibration, stopAudio, stopVibration]);
 
   useEffect(() => {
     if (!blockedAlarm) {
@@ -355,83 +372,108 @@ function AlarmToastBridge() {
   }, [blockedAlarm, deviceById]);
 
   const dismissAlarm = () => {
-    if (activeAlarm) {
-      seenActivityIds.current.add(activeAlarm.id);
-    }
+  if (activeAlarm) {
+    seenActivityIds.current.add(activeAlarm.id);
+  }
 
-    stopVibration();
-    stopAudio();
+  stopVibration();
+  stopAudio();
+  void cancelAllNotifications(); // ✅ tambah ini
 
-    setActiveAlarm(null);
-  };
+  setActiveAlarm(null);
+};
 
   return (
-    <Dialog open={Boolean(activeAlarm)} onOpenChange={(open) => !open && dismissAlarm()}>
-      <DialogContent className="inset-0 top-0 left-0 h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 rounded-none border-0 p-0 bg-[#09090b] text-white overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(239,68,68,0.38),transparent_45%),linear-gradient(180deg,rgba(127,29,29,0.92),rgba(9,9,11,0.98))]" />
-        <div className="relative z-10 flex h-full flex-col items-center justify-center p-6 sm:p-10 text-center gap-8">
-          <DialogHeader className="text-center max-w-2xl space-y-4">
-            <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl border border-white/15 bg-white/10 shadow-[0_0_50px_rgba(239,68,68,0.35)] backdrop-blur">
-              <ShieldAlert className="h-8 w-8 text-red-300" />
+  <Dialog open={Boolean(activeAlarm)} onOpenChange={(open) => !open && dismissAlarm()}>
+    <DialogContent className="inset-0 top-0 left-0 h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 rounded-none border-0 p-0 bg-[#09090b] text-white overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(239,68,68,0.38),transparent_45%),linear-gradient(180deg,rgba(127,29,29,0.92),rgba(9,9,11,0.98))]" />
+      
+      {/* ✅ Safe area padding untuk atas dan bawah */}
+      <div
+        className="relative z-10 flex h-full flex-col items-center justify-between p-6 sm:p-10 text-center overflow-y-auto"
+        style={{
+          paddingTop: "max(env(safe-area-inset-top, 0px), 2.5rem)",
+          paddingBottom: "max(env(safe-area-inset-bottom, 0px), 2.5rem)",
+        }}
+      >
+        {/* ── Top spacer ── */}
+        <div className="flex-1" />
+
+        {/* ── Content ── */}
+        <div className="flex flex-col items-center gap-6 w-full max-w-2xl">
+          <DialogHeader className="text-center space-y-4 w-full">
+            <div className="inline-flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl border border-white/15 bg-white/10 shadow-[0_0_50px_rgba(239,68,68,0.35)] backdrop-blur mx-auto">
+              <ShieldAlert className="h-7 w-7 sm:h-8 sm:w-8 text-red-300" />
             </div>
-            <div className="space-y-3">
-              <DialogTitle className="text-3xl sm:text-5xl font-bold tracking-tight text-white">
+            <div className="space-y-2 sm:space-y-3">
+              <DialogTitle className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white">
                 ALARM LASER TERBLOCKED
               </DialogTitle>
-              <DialogDescription className="text-base sm:text-xl text-white/80 max-w-xl">
+              <DialogDescription className="text-sm sm:text-lg text-white/80 max-w-xl mx-auto">
                 {activeAlarm?.description ?? "Laser sensor was blocked. Immediate attention is required."}
               </DialogDescription>
             </div>
           </DialogHeader>
 
-          <div className="grid gap-4 sm:grid-cols-3 max-w-4xl w-full">
-            <div className="rounded-2xl border border-white/10 bg-white/8 p-5 backdrop-blur-sm">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/60 mb-2">Device</p>
-              <p className="text-lg font-medium">{activeAlarm?.device ?? "Unknown device"}</p>
+          {/* ── Info cards ── */}
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 w-full">
+            <div className="rounded-2xl border border-white/10 bg-white/8 p-3 sm:p-5 backdrop-blur-sm">
+              <p className="text-xs uppercase tracking-[0.2em] text-white/60 mb-1 sm:mb-2">Device</p>
+              <p className="text-sm sm:text-lg font-medium truncate">{activeAlarm?.device ?? "Unknown"}</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/8 p-5 backdrop-blur-sm">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/60 mb-2">Event</p>
-              <p className="text-lg font-medium flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-red-300" />
-                {activeAlarm?.title ?? "Blocked"}
+            <div className="rounded-2xl border border-white/10 bg-white/8 p-3 sm:p-5 backdrop-blur-sm">
+              <p className="text-xs uppercase tracking-[0.2em] text-white/60 mb-1 sm:mb-2">Event</p>
+              <p className="text-sm sm:text-lg font-medium flex items-center justify-center gap-1 sm:gap-2">
+                <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-red-300 shrink-0" />
+                <span className="truncate">{activeAlarm?.title ?? "Blocked"}</span>
               </p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/8 p-5 backdrop-blur-sm">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/60 mb-2">Time</p>
-              <p className="text-lg font-medium">{activeAlarm?.time ?? "Just now"}</p>
+            <div className="rounded-2xl border border-white/10 bg-white/8 p-3 sm:p-5 backdrop-blur-sm">
+              <p className="text-xs uppercase tracking-[0.2em] text-white/60 mb-1 sm:mb-2">Time</p>
+              <p className="text-sm sm:text-lg font-medium">{activeAlarm?.time ?? "Just now"}</p>
             </div>
           </div>
 
-          <div className="flex flex-col gap-4 sm:items-center">
-            <div className="flex items-center gap-3 text-white/80 justify-center">
-              <Bell className="h-5 w-5 text-red-300" />
+          {/* ── Actions ── */}
+          <div className="flex flex-col gap-3 sm:gap-4 w-full items-center">
+            <div className="flex items-center gap-2 text-white/80 justify-center text-sm sm:text-base">
+              <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-red-300 shrink-0" />
               <span>Toast, notification, and full-screen alarm are active.</span>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row justify-center">
+            <div className="flex gap-3 w-full sm:w-auto">
               <button
                 onClick={dismissAlarm}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-5 py-3 font-medium text-white transition hover:bg-white/15"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 sm:px-5 py-3 font-medium text-white transition hover:bg-white/15 text-sm sm:text-base"
               >
-                <CircleCheckBig className="h-5 w-5" />
+                <CircleCheckBig className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
                 Acknowledge
               </button>
               <button
                 onClick={dismissAlarm}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-500 px-5 py-3 font-medium text-white transition hover:bg-red-400"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-red-500 px-4 sm:px-5 py-3 font-medium text-white transition hover:bg-red-400 text-sm sm:text-base"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
                 Close
               </button>
             </div>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
-  );
+
+        {/* ── Bottom spacer ── */}
+        <div className="flex-1" />
+      </div>
+    </DialogContent>
+  </Dialog>
+);
 }
 
 function FCMRegistrar() {
   const { user } = useFirebaseAuth();
+
+  useEffect(() => {
+    // Create Android high-priority notification channel on first run
+    void setupNotificationChannels();
+  }, []);
 
   useEffect(() => {
     if (!user?.uid) return;

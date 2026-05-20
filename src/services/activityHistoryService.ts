@@ -80,6 +80,10 @@ export const recordUserActivity = (
     writeStoredActivities([nextActivity, ...currentActivities]);
 };
 
+export const clearStoredUserActivities = () => {
+  writeStoredActivities([]);
+};
+
 export const subscribeUserActivities = (callback: (activities: StoredActivityEntry[]) => void) => {
     const windowObject = getWindowObject();
 

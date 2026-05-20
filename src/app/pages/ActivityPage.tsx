@@ -1,9 +1,11 @@
 import { useState, useCallback } from "react";
-import { Search, AlertTriangle, Shield, Activity as ActivityIcon, WifiOff, User } from "lucide-react";
-import { motion } from "motion/react";
+import { Search, AlertTriangle, Shield, Activity as ActivityIcon, WifiOff, User, Trash2 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { useFirebaseDevices } from "../../hooks/useFirebaseDevices";
 import { useFirebaseActivity } from "../../hooks/useFirebaseActivity";
 import { usePullToRefresh, PullIndicator, SafeTopSpacer } from "../../hooks/usePullToRefresh";
+import { clearStoredUserActivities } from "../../services/activityHistoryService";
+import { clearAlertsForDevices } from "../../services/alertService";
 
 type FilterType = "today" | "alerts" | "devices" | "all";
 
@@ -11,19 +13,40 @@ export function ActivityPage() {
   const [filter, setFilter] = useState<FilterType>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 
   const { devices, loading: devicesLoading, error: deviceError } = useFirebaseDevices();
   const { activities, loading: activityLoading, error: activityError } = useFirebaseActivity(devices);
 
   // ── Pull-to-refresh ────────────────────────────────────────────────────
   const handleRefresh = useCallback(async () => {
-    // Firebase subscriptions are real-time; a brief wait gives visual feedback
     await new Promise((res) => setTimeout(res, 800));
     setRefreshKey((k) => k + 1);
   }, []);
 
   const { refreshing, pullDistance, threshold, touchHandlers } =
     usePullToRefresh(handleRefresh);
+
+  // ── Clear history ──────────────────────────────────────────────────────
+  const handleClearHistory = async () => {
+    setIsClearing(true);
+    try {
+      // 1. Hapus local storage
+      clearStoredUserActivities();
+
+      // 2. Hapus alerts di Firebase untuk semua device milik user
+      const deviceIds = devices.map((d) => d.id);
+      await clearAlertsForDevices(deviceIds);
+
+      setRefreshKey((k) => k + 1);
+    } catch (error) {
+      console.error("Failed to clear history:", error);
+    } finally {
+      setIsClearing(false);
+      setShowClearConfirm(false);
+    }
+  };
 
   // ── Filtering ──────────────────────────────────────────────────────────
   const filteredActivities = activities
@@ -77,11 +100,7 @@ export function ActivityPage() {
   };
 
   return (
-    <div
-      className="min-h-dvh bg-background pb-28 sm:pb-32"
-      {...touchHandlers}
-    >
-      {/* Status bar spacer */}
+    <div className="min-h-dvh bg-background pb-28 sm:pb-32" {...touchHandlers}>
       <SafeTopSpacer />
 
       <PullIndicator
@@ -92,15 +111,20 @@ export function ActivityPage() {
 
       <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <div className="pt-4 pb-6 space-y-6 lg:space-y-8">
-          <div className="flex flex-col gap-2">
-            <h1 className="text-3xl sm:text-4xl mb-0 leading-tight">
-              History User & Alat
-            </h1>
-            <p className="text-muted-foreground">
-              Monitor user actions and device events in one timeline
-            </p>
+
+          {/* ── Header ─────────────────────────────────────────────────── */}
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-2">
+              <h1 className="text-3xl sm:text-4xl mb-0 leading-tight">
+                History User & Alat
+              </h1>
+              <p className="text-muted-foreground">
+                Monitor user actions and device events in one timeline
+              </p>
+            </div>
           </div>
 
+          {/* ── Search ─────────────────────────────────────────────────── */}
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <input
@@ -112,31 +136,73 @@ export function ActivityPage() {
             />
           </div>
 
+          {/* ── Filter Tabs ────────────────────────────────────────────── */}
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0">
-            {(["today", "alerts", "devices", "all"] as FilterType[]).map(
-              (f) => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  className={`px-4 py-2 rounded-xl text-sm whitespace-nowrap transition-all ${
-                    filter === f
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-card border border-border hover:bg-accent"
-                  }`}
-                >
-                  {f.charAt(0).toUpperCase() + f.slice(1)}
-                </button>
-              )
+            {(["today", "alerts", "devices", "all"] as FilterType[]).map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-4 py-2 rounded-xl text-sm whitespace-nowrap transition-all ${
+                  filter === f
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card border border-border hover:bg-accent"
+                }`}
+              >
+                {f.charAt(0).toUpperCase() + f.slice(1)}
+              </button>
+            ))}
+
+            {activities.length > 0 && (
+              <button
+              onClick={() => setShowClearConfirm(true)}
+              className="shrink-0 ml-auto p-2 rounded-xl border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all"
+              title="Clear all history"
+              >
+              <Trash2 className="w-4 h-4" />
+              </button>
             )}
           </div>
 
+          {/* ── Konfirmasi Clear ───────────────────────────────────────── */}
+          <AnimatePresence>
+            {showClearConfirm && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 space-y-3"
+              >
+                <p className="text-center text-sm text-destructive">
+                  Hapus semua history? Ini akan menghapus riwayat lokal dan alert di Firebase.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={() => setShowClearConfirm(false)}
+                    disabled={isClearing}
+                    className="flex-1 py-2.5 rounded-xl border border-border hover:bg-accent transition-all text-sm disabled:opacity-50"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleClearHistory}
+                    disabled={isClearing}
+                    className="flex-1 py-2.5 rounded-xl bg-destructive text-white hover:bg-destructive/90 transition-all text-sm disabled:opacity-70"
+                  >
+                    {isClearing ? "Menghapus..." : "Ya, Hapus Semua"}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── Activity List ──────────────────────────────────────────── */}
           {deviceError || activityError ? (
             <div className="rounded-xl border border-status-alert/30 bg-status-alert/10 p-4 text-sm text-status-alert text-center py-16">
               {deviceError || activityError}
             </div>
           ) : devicesLoading || activityLoading ? (
             <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground text-center py-16">
-              Loading Firebase activity...
+              Loading activity...
             </div>
           ) : filteredActivities.length === 0 ? (
             <div className="text-center py-16 px-4">
@@ -148,8 +214,8 @@ export function ActivityPage() {
                 {searchQuery
                   ? "Try adjusting your search"
                   : devicesLoading || activityLoading
-                  ? "Waiting for Firebase records"
-                  : "No Firebase activity yet"}
+                  ? "Waiting for records"
+                  : "No activity yet"}
               </p>
             </div>
           ) : (

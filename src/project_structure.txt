@@ -1,8 +1,8 @@
 📁 /
     📁 app/
-        📄 App.tsx (0.0108 MB)
+        📄 App.tsx (0.0198 MB)
         📁 components/
-            📄 BottomNav.tsx (0.0034 MB)
+            📄 BottomNav.tsx (0.0044 MB)
             📁 figma/
                 📄 ImageWithFallback.tsx (0.0011 MB)
             📁 ui/
@@ -55,43 +55,48 @@
                 📄 use-mobile.ts (0.0006 MB)
                 📄 utils.ts (0.0002 MB)
         📁 pages/
-            📄 ActivityPage.tsx (0.0069 MB)
-            📄 AddDevicePage.tsx (0.0115 MB)
-            📄 Dashboard.tsx (0.0105 MB)
-            📄 DeviceDetailPage.tsx (0.0266 MB)
-            📄 DevicesPage.tsx (0.0086 MB)
+            📄 ActivityPage.tsx (0.0115 MB)
+            📄 AddDevicePage.tsx (0.0116 MB)
+            📄 Dashboard.tsx (0.0122 MB)
+            📄 DeviceDetailPage.tsx (0.0228 MB)
+            📄 DevicesPage.tsx (0.0115 MB)
             📄 LoginPage.tsx (0.0076 MB)
-            📄 NotificationsPage.tsx (0.0086 MB)
+            📄 NotificationsPage.tsx (0.0106 MB)
             📄 OnboardingScreen.tsx (0.0033 MB)
-            📄 ProfilePage.tsx (0.0102 MB)
+            📄 ProfilePage.tsx (0.0104 MB)
             📄 RegisterPage.tsx (0.0106 MB)
-            📄 SplashScreen.tsx (0.0025 MB)
+            📄 RingtonePage.tsx (0.0116 MB)
+            📄 SplashScreen.tsx (0.0027 MB)
+            📄 VibrationPage.tsx (0.0055 MB)
         📄 theme-provider.tsx (0.0016 MB)
     📁 firebase/
-        📄 config.ts (0.0011 MB)
+        📄 config.ts (0.0012 MB)
     📁 hooks/
-        📄 useFirebaseActivity.ts (0.0062 MB)
+        📄 useDeviceAlive.ts (0.001 MB)
+        📄 useFirebaseActivity.ts (0.0063 MB)
         📄 useFirebaseAuth.ts (0.0006 MB)
-        📄 useFirebaseDevices.ts (0.0043 MB)
+        📄 useFirebaseDevices.ts (0.0047 MB)
+        📄 usePullToRefresh.tsx (0.0033 MB)
+        📄 useUserAlertPreferences.ts (0.002 MB)
     📁 imports/
         📁 pasted_text/
             📄 iot-security-app-design.md (0.0076 MB)
     📄 main.py (0.0032 MB)
     📄 main.tsx (0.0013 MB)
-    📄 project_scan.json (0.0298 MB)
-    📄 project_structure.txt (0.004 MB)
     📁 services/
-        📄 activityHistoryService.ts (0.0032 MB)
-        📄 alertService.ts (0.0073 MB)
+        📄 activityHistoryService.ts (0.0033 MB)
+        📄 alertService.ts (0.0078 MB)
         📄 authService.ts (0.0021 MB)
-        📄 deviceService.ts (0.0106 MB)
-        📄 notificationService.ts (0.0013 MB)
+        📄 deviceService.ts (0.0115 MB)
+        📄 fcmService.ts (0.0036 MB)
+        📄 notificationService.ts (0.0059 MB)
         📄 sensorService.ts (0.0018 MB)
+        📄 userPreferencesService.ts (0.0046 MB)
     📁 store/
         📄 deviceStore.ts (0.0003 MB)
     📁 styles/
         📄 fonts.css (0.0 MB)
-        📄 globals.css (0.0 MB)
+        📄 globals.css (0.0005 MB)
         📄 index.css (0.0001 MB)
         📄 tailwind.css (0.0001 MB)
         📄 theme.css (0.0065 MB)

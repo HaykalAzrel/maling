@@ -10,7 +10,7 @@
                     "name": "App.tsx",
                     "type": "file",
                     "extension": ".tsx",
-                    "size_mb": 0.0108,
+                    "size_mb": 0.0198,
                     "path": "./app\\App.tsx"
                 },
                 {
@@ -21,7 +21,7 @@
                             "name": "BottomNav.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0034,
+                            "size_mb": 0.0044,
                             "path": "./app\\components\\BottomNav.tsx"
                         },
                         {
@@ -389,35 +389,35 @@
                             "name": "ActivityPage.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0069,
+                            "size_mb": 0.0115,
                             "path": "./app\\pages\\ActivityPage.tsx"
                         },
                         {
                             "name": "AddDevicePage.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0115,
+                            "size_mb": 0.0116,
                             "path": "./app\\pages\\AddDevicePage.tsx"
                         },
                         {
                             "name": "Dashboard.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0105,
+                            "size_mb": 0.0122,
                             "path": "./app\\pages\\Dashboard.tsx"
                         },
                         {
                             "name": "DeviceDetailPage.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0266,
+                            "size_mb": 0.0228,
                             "path": "./app\\pages\\DeviceDetailPage.tsx"
                         },
                         {
                             "name": "DevicesPage.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0086,
+                            "size_mb": 0.0115,
                             "path": "./app\\pages\\DevicesPage.tsx"
                         },
                         {
@@ -431,7 +431,7 @@
                             "name": "NotificationsPage.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0086,
+                            "size_mb": 0.0106,
                             "path": "./app\\pages\\NotificationsPage.tsx"
                         },
                         {
@@ -445,7 +445,7 @@
                             "name": "ProfilePage.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0102,
+                            "size_mb": 0.0104,
                             "path": "./app\\pages\\ProfilePage.tsx"
                         },
                         {
@@ -456,11 +456,25 @@
                             "path": "./app\\pages\\RegisterPage.tsx"
                         },
                         {
+                            "name": "RingtonePage.tsx",
+                            "type": "file",
+                            "extension": ".tsx",
+                            "size_mb": 0.0116,
+                            "path": "./app\\pages\\RingtonePage.tsx"
+                        },
+                        {
                             "name": "SplashScreen.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0025,
+                            "size_mb": 0.0027,
                             "path": "./app\\pages\\SplashScreen.tsx"
+                        },
+                        {
+                            "name": "VibrationPage.tsx",
+                            "type": "file",
+                            "extension": ".tsx",
+                            "size_mb": 0.0055,
+                            "path": "./app\\pages\\VibrationPage.tsx"
                         }
                     ]
                 },
@@ -481,7 +495,7 @@
                     "name": "config.ts",
                     "type": "file",
                     "extension": ".ts",
-                    "size_mb": 0.0011,
+                    "size_mb": 0.0012,
                     "path": "./firebase\\config.ts"
                 }
             ]
@@ -491,10 +505,17 @@
             "type": "folder",
             "children": [
                 {
+                    "name": "useDeviceAlive.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.001,
+                    "path": "./hooks\\useDeviceAlive.ts"
+                },
+                {
                     "name": "useFirebaseActivity.ts",
                     "type": "file",
                     "extension": ".ts",
-                    "size_mb": 0.0062,
+                    "size_mb": 0.0063,
                     "path": "./hooks\\useFirebaseActivity.ts"
                 },
                 {
@@ -508,8 +529,22 @@
                     "name": "useFirebaseDevices.ts",
                     "type": "file",
                     "extension": ".ts",
-                    "size_mb": 0.0043,
+                    "size_mb": 0.0047,
                     "path": "./hooks\\useFirebaseDevices.ts"
+                },
+                {
+                    "name": "usePullToRefresh.tsx",
+                    "type": "file",
+                    "extension": ".tsx",
+                    "size_mb": 0.0033,
+                    "path": "./hooks\\usePullToRefresh.tsx"
+                },
+                {
+                    "name": "useUserAlertPreferences.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.002,
+                    "path": "./hooks\\useUserAlertPreferences.ts"
                 }
             ]
         },
@@ -547,20 +582,6 @@
             "path": "./main.tsx"
         },
         {
-            "name": "project_scan.json",
-            "type": "file",
-            "extension": ".json",
-            "size_mb": 0.0298,
-            "path": "./project_scan.json"
-        },
-        {
-            "name": "project_structure.txt",
-            "type": "file",
-            "extension": ".txt",
-            "size_mb": 0.004,
-            "path": "./project_structure.txt"
-        },
-        {
             "name": "services",
             "type": "folder",
             "children": [
@@ -568,14 +589,14 @@
                     "name": "activityHistoryService.ts",
                     "type": "file",
                     "extension": ".ts",
-                    "size_mb": 0.0032,
+                    "size_mb": 0.0033,
                     "path": "./services\\activityHistoryService.ts"
                 },
                 {
                     "name": "alertService.ts",
                     "type": "file",
                     "extension": ".ts",
-                    "size_mb": 0.0073,
+                    "size_mb": 0.0078,
                     "path": "./services\\alertService.ts"
                 },
                 {
@@ -589,14 +610,21 @@
                     "name": "deviceService.ts",
                     "type": "file",
                     "extension": ".ts",
-                    "size_mb": 0.0106,
+                    "size_mb": 0.0115,
                     "path": "./services\\deviceService.ts"
+                },
+                {
+                    "name": "fcmService.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.0036,
+                    "path": "./services\\fcmService.ts"
                 },
                 {
                     "name": "notificationService.ts",
                     "type": "file",
                     "extension": ".ts",
-                    "size_mb": 0.0013,
+                    "size_mb": 0.0059,
                     "path": "./services\\notificationService.ts"
                 },
                 {
@@ -605,6 +633,13 @@
                     "extension": ".ts",
                     "size_mb": 0.0018,
                     "path": "./services\\sensorService.ts"
+                },
+                {
+                    "name": "userPreferencesService.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.0046,
+                    "path": "./services\\userPreferencesService.ts"
                 }
             ]
         },
@@ -636,7 +671,7 @@
                     "name": "globals.css",
                     "type": "file",
                     "extension": ".css",
-                    "size_mb": 0.0,
+                    "size_mb": 0.0005,
                     "path": "./styles\\globals.css"
                 },
                 {

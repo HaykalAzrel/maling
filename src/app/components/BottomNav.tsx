@@ -1,9 +1,13 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Home, Shield, Activity, User, Power } from "lucide-react";
 import { NavLink } from "react-router";
 import { useFirebaseDevices } from "../../hooks/useFirebaseDevices";
 import { setAllDevicesPowered } from "../../services/deviceService";
 import { recordUserActivity } from "../../services/activityHistoryService";
+import { OFFLINE_TIMEOUT_MS } from "../../hooks/useDeviceAlive";
+
+const suppressAlertKey = "secureSense:suppressAlertsUntil";
+const suppressAlertWindowMs = 6000;
 
 const navItems = [
   { icon: Home, label: "Home", path: "/dashboard" },
@@ -16,20 +20,42 @@ export function BottomNav() {
   const { devices } = useFirebaseDevices();
   const [isUpdatingPower, setIsUpdatingPower] = useState(false);
 
+  // ── Ticker 1 detik untuk re-evaluasi lastSeen ──────────────────────────
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1_000);
+    return () => clearInterval(id);
+  }, []);
+
+  // ── Apakah semua device masih kirim heartbeat dalam 30 detik? ──────────
+  const hasDeadDevice = useMemo(
+    () => devices.some((d) => now - (d.lastSeen ?? 0) >= OFFLINE_TIMEOUT_MS),
+    [devices, now]
+  );
+
+  // ── Status power (hanya dari config Firebase, bukan lastSeen) ──────────
   const isPowerEnabled = useMemo(
-    () => devices.length > 0 && devices.every((device) => device.monitoring !== false && device.laserOn !== false),
+    () =>
+      devices.length > 0 &&
+      devices.every((d) => d.monitoring !== false && d.laserOn !== false),
     [devices]
   );
 
   const toggleAllDevices = async () => {
-    if (devices.length === 0 || isUpdatingPower) {
-      return;
-    }
-
-    setIsUpdatingPower(true);
+  if (devices.length === 0 || isUpdatingPower || hasDeadDevice) return;
+  setIsUpdatingPower(true);
 
     try {
+      // ✅ Set suppress DULU sebelum Firebase update
+      try {
+        window.localStorage.setItem(
+          suppressAlertKey,
+          String(Date.now() + suppressAlertWindowMs)
+        );
+      } catch { /* ignore */ }
+
       await setAllDevicesPowered(!isPowerEnabled, devices);
+
       recordUserActivity({
         title: isPowerEnabled ? "Turned devices off" : "Turned devices on",
         device: "All devices",
@@ -46,7 +72,7 @@ export function BottomNav() {
         <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-[8%] z-10">
           <button
             onClick={toggleAllDevices}
-            disabled={isUpdatingPower}
+            disabled={isUpdatingPower || hasDeadDevice}
             className={`w-14 h-14 rounded-full border shadow-lg flex items-center justify-center transition-all ${
               isPowerEnabled
                 ? "bg-primary text-primary-foreground border-primary/40 shadow-primary/30"

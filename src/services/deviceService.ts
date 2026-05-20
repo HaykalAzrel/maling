@@ -1,6 +1,6 @@
 import { get, ref, onValue, set, update, remove } from "firebase/database";
 import { database } from "../firebase/config";
-import { Device } from "../types/device";
+import { Device, DeviceSchedulePayload } from "../types/device";
 
 type DeviceRecord = Device & {
     info?: Device["info"];
@@ -17,34 +17,36 @@ const normalizeDevice = (id: string, record: DeviceRecord): Device => {
     const info = record.info ?? {};
     const sensor = record.sensor ?? {};
     const config = record.config ?? {};
-    const deviceType = info.device_type ?? record.deviceType ?? record.name ?? "Unknown Device";
-    const bootAt = info.boot_at ?? record.bootAt ?? record.registeredAt ?? Date.now();
-    const freeHeap = record.freeHeap ?? info.free_heap ?? record.freeheap ?? 0;
-    const lastSeen = record.lastSeen ?? info.last_seen ?? Date.now();
-    const uptime = record.uptime ?? info.uptime_sec ?? record.uptimeSec ?? 0;
-    const online = record.online ?? info.online ?? record.status === "online";
-    const firmware = record.firmware ?? info.firmware ?? "Unknown";
-    const ip = record.ip ?? info.ip ?? "Unknown";
-    const mac = record.mac ?? info.mac ?? "Unknown";
-    const ssid = record.ssid ?? info.ssid ?? record.location ?? "Unknown";
-    const rssi = record.rssi ?? info.rssi ?? 0;
-    const mdns = record.mdns ?? info.mdns ?? "Unknown";
-    const laserOn = record.laserOn ?? record.laser_on ?? config.laser_on ?? config.monitoring ?? false;
-    const schedule = record.schedule ?? config.schedule ?? undefined;
-    const monitoring = record.monitoring ?? config.monitoring ?? online;
-    const threshold = record.threshold ?? config.threshold;
 
-    // Normalize owner: support both 'owner' (from firmware) and 'ownerId' (from app)
-    const ownerId = record.ownerId ?? record.owner ?? undefined;
+    // ── Field yang ditulis HARDWARE → info lebih prioritas ──────────────
+    const deviceType = info.device_type ?? record.deviceType ?? record.name ?? "Unknown Device";
+    const bootAt     = info.boot_at    ?? record.bootAt    ?? record.registeredAt ?? Date.now();
+    const freeHeap   = info.free_heap  ?? record.freeHeap  ?? record.freeheap ?? 0;
+    const lastSeen   = info.last_seen  ?? record.lastSeen  ?? Date.now();
+    const uptime     = info.uptime_sec ?? record.uptime    ?? record.uptimeSec ?? 0;
+    const firmware   = info.firmware   ?? record.firmware  ?? "Unknown";
+    const ip         = info.ip         ?? record.ip        ?? "Unknown";
+    const mac        = info.mac        ?? record.mac       ?? "Unknown";
+    const ssid       = info.ssid       ?? record.ssid      ?? record.location ?? "Unknown";
+    const rssi       = info.rssi       ?? record.rssi      ?? 0;
+    const mdns       = info.mdns       ?? record.mdns      ?? "Unknown";
+
+    // ── Field yang ditulis APP → record lebih prioritas ──────────────────
+    const online     = record.online     ?? info.online    ?? record.status === "online";
+    const laserOn    = record.laser_on   ?? record.laserOn ?? config.laser_on ?? config.monitoring ?? false;
+    const monitoring = record.monitoring ?? config.monitoring ?? online;
+    const threshold  = record.threshold  ?? config.threshold;
+    const schedule   = record.schedule   ?? config.schedule ?? undefined;
+    const ownerId    = record.ownerId    ?? record.owner   ?? undefined;
 
     return {
         ...record,
-        id: record.id || info.device_id || id,
-        name: record.name ?? deviceType,
-        location: record.location ?? ssid ?? mdns,
-        status: online ? "online" : "offline",
+        id:           record.id || info.device_id || id,
+        name:         record.name ?? deviceType,
+        location:     record.location ?? ssid ?? mdns,
+        status:       online ? "online" : "offline",
         firmware,
-        freeheap: freeHeap,
+        freeheap:     freeHeap,
         freeHeap,
         ip,
         mac,
@@ -54,15 +56,15 @@ const normalizeDevice = (id: string, record: DeviceRecord): Device => {
         bootAt,
         lastSeen,
         uptime,
-        uptimeSec: record.uptimeSec ?? info.uptime_sec ?? uptime,
+        uptimeSec:    info.uptime_sec ?? record.uptimeSec ?? uptime,
         deviceType,
         mdns,
         online,
         monitoring,
         threshold,
         laserOn,
-        schedule: schedule as Device["schedule"],
-        config: config as Device["config"],
+        schedule:     schedule as Device["schedule"],
+        config:       config   as Device["config"],
         info,
         sensor,
         ownerId,
@@ -159,6 +161,7 @@ export type DeviceCreateInput = {
     location: string;
     monitoring: boolean;
     ownerId?: string | null;
+    forceUpdate?: boolean;
 };
 
 export const upsertDevice = async ({
@@ -167,6 +170,7 @@ export const upsertDevice = async ({
     location,
     monitoring,
     ownerId,
+    forceUpdate = false,
 }: DeviceCreateInput) => {
     if (!database) {
         throw new Error("Firebase Realtime Database is not configured.");
@@ -200,7 +204,7 @@ export const upsertDevice = async ({
 
     await update(deviceRef, {
         id: existingData.id ?? trimmedDeviceId,
-        name: existingData.name ?? trimmedName,
+        name: forceUpdate ? trimmedName : (existingData.name ?? trimmedName),
         location: existingData.location ?? trimmedLocation,
         monitoring: existingData.monitoring ?? monitoring,
         config: {
@@ -263,7 +267,10 @@ export const removeDevice = async (deviceId: string): Promise<void> => {
         throw new Error("Device ID is required.");
     }
 
-    await remove(ref(database, `devices/${key}`));
+    await update(ref(database, `devices/${key}`), {
+        owner: null,
+        ownerId: null,
+    });
 };
 
 // ✅ Toggle power untuk satu device spesifik (dipakai DeviceDetailPage)
@@ -285,10 +292,47 @@ export const setDevicePowered = async (deviceId: string, enabled: boolean): Prom
         [`devices/${key}/laser_on`]: enabled,
         [`devices/${key}/config/monitoring`]: enabled,
         [`devices/${key}/config/laser_on`]: enabled,
+        [`devices/${key}/config/suppressAlertsUntil`]: now + 10_000,
         [`devices/${key}/online`]: enabled,
         [`devices/${key}/status`]: enabled ? "online" : "offline",
-        [`devices/${key}/lastSeen`]: now,
-        [`devices/${key}/info/last_seen`]: now,
+    });
+};
+
+export const updateDeviceSchedule = async (
+    deviceId: string,
+    schedule: DeviceSchedulePayload
+): Promise<void> => {
+    if (!database) {
+        throw new Error("Firebase Realtime Database is not configured.");
+    }
+
+    const key = sanitizeDeviceKey(deviceId);
+
+    if (!key) {
+        throw new Error("Device ID is required.");
+    }
+
+    await update(ref(database, `devices/${key}/config`), {
+        schedule,
+    });
+};
+
+export const updateDeviceNotificationPreference = async (
+    deviceId: string,
+    enabled: boolean
+): Promise<void> => {
+    if (!database) {
+        throw new Error("Firebase Realtime Database is not configured.");
+    }
+
+    const key = sanitizeDeviceKey(deviceId);
+
+    if (!key) {
+        throw new Error("Device ID is required.");
+    }
+
+    await update(ref(database, `devices/${key}/config/notifications`), {
+        enabled,
     });
 };
 
@@ -302,6 +346,7 @@ export const setAllDevicesPowered = async (enabled: boolean, devices: Device[]) 
     }
 
     const now = Date.now();
+    const suppressUntil = now + 10_000;
     const payload = devices.reduce<Record<string, unknown>>((accumulator, device) => {
         const deviceKey = sanitizeDeviceKey(device.id || device.deviceType || device.name);
 
@@ -309,10 +354,9 @@ export const setAllDevicesPowered = async (enabled: boolean, devices: Device[]) 
         accumulator[`devices/${deviceKey}/laser_on`] = enabled;
         accumulator[`devices/${deviceKey}/config/monitoring`] = enabled;
         accumulator[`devices/${deviceKey}/config/laser_on`] = enabled;
+        accumulator[`devices/${deviceKey}/config/suppressAlertsUntil`] = suppressUntil;
         accumulator[`devices/${deviceKey}/online`] = enabled;
         accumulator[`devices/${deviceKey}/status`] = enabled ? "online" : "offline";
-        accumulator[`devices/${deviceKey}/lastSeen`] = now;
-        accumulator[`devices/${deviceKey}/info/last_seen`] = now;
         accumulator[`devices/${deviceKey}/sensor/updated_at`] = now;
 
         return accumulator;

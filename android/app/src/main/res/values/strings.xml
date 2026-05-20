@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">SecureSense</string>
-    <string name="title_activity_main">SecureSense</string>
-    <string name="package_name">com.securesense.monitoring</string>
-    <string name="custom_url_scheme">com.securesense.monitoring</string>
+    <string name="app_name">Securo</string>
+    <string name="title_activity_main">Securo</string>
+    <string name="package_name">com.securo.security</string>
+    <string name="custom_url_scheme">com.securo.security</string>
 </resources>

@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.deteksimaling.app',
-  appName: 'Deteksi Maling',
+  appName: 'Securo',
   webDir: 'dist',
   server: {
     url: 'https://webdashboardptapt.web.app',
@@ -13,6 +13,9 @@ const config: CapacitorConfig = {
       scopes: ['profile', 'email'],
       serverClientId: '383764904540-qvo1e4vt1c5744b3i09ua77gjf5evff8.apps.googleusercontent.com',  // dari Firebase Console
       forceCodeForRefreshToken: true
+    },
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert'],
     }
   }
 };

@@ -1,47 +1,16 @@
 import { useNavigate } from "react-router";
 import {
   Bell, Shield, Moon, Lock, User, LogOut, ChevronRight,
-  Vibrate, Volume2, RefreshCw,
+  Volume2, RefreshCw, Speaker, Vibrate,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useRef, useCallback } from "react";
 import { useAppTheme } from "../theme-provider";
 import { useFirebaseAuth } from "../../hooks/useFirebaseAuth";
 import { signOutCurrentUser } from "../../services/authService";
+import { useUserAlertPreferences } from "../../hooks/useUserAlertPreferences";
+import { unregisterFCMToken } from "../../services/notificationService";
 
-const preferenceStorageKey = "secureSense:preferences";
-
-type PreferenceState = {
-  sound: boolean;
-  vibration: boolean;
-  pushNotifications: boolean;
-};
-
-const loadPreferences = (): PreferenceState => {
-  if (typeof window === "undefined")
-    return { sound: true, vibration: true, pushNotifications: true };
-  try {
-    const raw = window.localStorage.getItem(preferenceStorageKey);
-    if (!raw) return { sound: true, vibration: true, pushNotifications: true };
-    const parsed = JSON.parse(raw) as Partial<PreferenceState>;
-    return {
-      sound: parsed.sound ?? true,
-      vibration: parsed.vibration ?? true,
-      pushNotifications: parsed.pushNotifications ?? true,
-    };
-  } catch {
-    return { sound: true, vibration: true, pushNotifications: true };
-  }
-};
-
-const savePreferences = (next: Partial<PreferenceState>) => {
-  if (typeof window === "undefined") return;
-  const current = loadPreferences();
-  window.localStorage.setItem(
-    preferenceStorageKey,
-    JSON.stringify({ ...current, ...next })
-  );
-};
 
 // ★ KEY FIX: guaranteed minimum padding even if env() returns 0
 const SAFE_TOP_STYLE = {
@@ -157,11 +126,7 @@ export function ProfilePage() {
   const { theme, toggleTheme } = useAppTheme();
   const { user } = useFirebaseAuth();
 
-  const [pushNotifications, setPushNotifications] = useState(
-    () => loadPreferences().pushNotifications
-  );
-  const [sound, setSound] = useState(() => loadPreferences().sound);
-  const [vibration, setVibration] = useState(() => loadPreferences().vibration);
+  const { preferences, updatePreferences } = useUserAlertPreferences();
   const isDarkTheme = theme === "dark";
 
   const [refreshing, setRefreshing] = useState(false);
@@ -173,7 +138,7 @@ export function ProfilePage() {
 
   const displayName =
     user?.displayName ?? user?.email?.split("@")[0] ?? "SecureSense User";
-  const displayEmail = user?.email ?? "No Firebase account";
+  const displayEmail = user?.email ?? "No user account";
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -195,30 +160,35 @@ export function ProfilePage() {
   };
 
   const handleLogout = async () => {
-    await signOutCurrentUser();
-    navigate("/login");
+  // ✅ Hapus FCM token sebelum logout
+  if (user?.uid) {
+    await unregisterFCMToken(user.uid);
+  }
+  await signOutCurrentUser();
+  navigate("/login");
   };
 
   const settingsItems = [
     {
+      icon: Volume2, label: "Sound",
+      toggle: {
+        value: preferences.soundEnabled,
+        onChange: () => updatePreferences({ soundEnabled: !preferences.soundEnabled }),
+      },
+    },
+    {
       icon: Bell, label: "Notifications",
       toggle: {
-        value: pushNotifications,
-        onChange: () =>
-          setPushNotifications((cur) => {
-            const next = !cur;
-            savePreferences({ pushNotifications: next });
-            return next;
-          }),
+        value: preferences.pushNotifications,
+        onChange: () => updatePreferences({ pushNotifications: !preferences.pushNotifications }),
       },
     },
     {
       icon: Moon, label: "Appearance",
       toggle: { value: isDarkTheme, onChange: toggleTheme },
     },
-    { icon: Lock, label: "Security", path: "/settings/security" },
-    { icon: Shield, label: "Connected Devices", path: "/devices" },
-    { icon: User, label: "Privacy", path: "/settings/privacy" },
+    { icon: Speaker, label: "Ringtone", path: "/settings/ringtone" },
+    { icon: Vibrate, label: "Vibration", path: "/settings/vibration" },
   ] as const;
 
   return (
@@ -276,9 +246,17 @@ export function ProfilePage() {
                   return (
                     <div
                       key={index}
-                      onClick={() => { if (hasPath) navigate(item.path); }}
+                      onClick={() => {
+                        if (hasToggle) {
+                          item.toggle.onChange();
+                          return;
+                        }
+                        if (hasPath) {
+                          navigate(item.path);
+                        }
+                      }}
                       className={`w-full flex items-center gap-4 px-4 py-4 transition-colors border-b border-border last:border-b-0 ${
-                        hasPath ? "cursor-pointer hover:bg-accent" : "cursor-default"
+                        hasPath || hasToggle ? "cursor-pointer hover:bg-accent" : "cursor-default"
                       }`}
                     >
                       <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
@@ -293,51 +271,6 @@ export function ProfilePage() {
                     </div>
                   );
                 })}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-sm text-muted-foreground mb-3 px-2">APP SETTINGS</h3>
-              <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 space-y-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
-                      <Volume2 className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="min-w-0">
-                      <p>Sound</p>
-                      <p className="text-sm text-muted-foreground">Alert sound effects</p>
-                    </div>
-                  </div>
-                  <Toggle
-                    value={sound}
-                    onChange={() => setSound((cur) => {
-                      const next = !cur;
-                      savePreferences({ sound: next });
-                      return next;
-                    })}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
-                      <Vibrate className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="min-w-0">
-                      <p>Vibration</p>
-                      <p className="text-sm text-muted-foreground">Haptic feedback</p>
-                    </div>
-                  </div>
-                  <Toggle
-                    value={vibration}
-                    onChange={() => setVibration((cur) => {
-                      const next = !cur;
-                      savePreferences({ vibration: next });
-                      return next;
-                    })}
-                  />
-                </div>
               </div>
             </div>
 

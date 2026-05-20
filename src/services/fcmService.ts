@@ -19,7 +19,10 @@ export const registerFCMToken = async (userId: string): Promise<void> => {
     } else {
       await registerWebPush(userId);
     }
-  } catch (error) {
+  } catch (error: unknown) {
+    // Silently ignore permission-related errors — user chose to block notifications
+    const code = (error as { code?: string }).code ?? "";
+    if (code.startsWith("messaging/permission")) return;
     console.warn("FCM token registration failed:", error);
   }
 };
@@ -51,9 +54,12 @@ const registerNativePush = async (userId: string): Promise<void> => {
   const permResult = await PushNotifications.requestPermissions();
   if (permResult.receive !== "granted") return;
 
+  // Remove old listeners first to prevent duplicates on re-register
+  await PushNotifications.removeAllListeners();
+
   await PushNotifications.register();
 
-  PushNotifications.addListener("registration", async (token) => {
+  await PushNotifications.addListener("registration", async (token) => {
     if (!database) return;
     await set(
       ref(database, `users/${userId}/fcmTokens/${tokenToKey(token.value)}`),
@@ -61,15 +67,17 @@ const registerNativePush = async (userId: string): Promise<void> => {
     );
   });
 
-  PushNotifications.addListener("registrationError", (err) => {
+  await PushNotifications.addListener("registrationError", (err) => {
     console.warn("Native push registration error:", err);
   });
 
-  // Handle notification tap when app is backgrounded/killed
-  PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
+  // Navigate to device page when user taps the notification
+  await PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
     const data = action.notification.data as Record<string, string> | undefined;
     if (data?.deviceId) {
       window.location.href = `/devices/${data.deviceId}`;
+    } else {
+      window.location.href = "/activity";
     }
   });
 };

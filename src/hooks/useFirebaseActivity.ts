@@ -11,6 +11,7 @@ export type ActivityItem = {
   type: "alert" | "warning" | "success" | "info" | "offline" | "sensor" | "user";
   title: string;
   device: string;
+  deviceId?: string;
   time: string;
   timestamp: number;
   severity: "critical" | "warning" | "success" | "info";
@@ -48,6 +49,7 @@ const activityFromAlert = (alert: Alert, device?: Device): ActivityItem => ({
       ? "Intrusion Detected"
       : "Device Alert",
   device: alert.deviceName || device?.name || alert.deviceId,
+  deviceId: alert.deviceId,
   time: formatTimeAgo(alert.timestamp),
   timestamp: alert.timestamp,
   severity:
@@ -66,6 +68,7 @@ const activityFromDevice = (device: Device): ActivityItem => ({
       ? "Monitoring Enabled"
       : "Monitoring Disabled",
   device: device.name,
+  deviceId: device.id,
   time: formatTimeAgo(device.lastSeen),
   timestamp: device.lastSeen,
   severity: device.status === "offline" ? "warning" : device.monitoring ? "success" : "info",
@@ -86,6 +89,8 @@ const activityFromSensor = (device: Device, sensor: SensorData): ActivityItem | 
   }
 
   const blocked = sensor.laser === "BLOCKED";
+  if (blocked && !device.laserOn) return null;
+  
   const title = blocked
     ? "Laser Beam Blocked"
     : hasLaser
@@ -99,6 +104,7 @@ const activityFromSensor = (device: Device, sensor: SensorData): ActivityItem | 
     type: "sensor",
     title: `${title}${messageSuffix}`,
     device: device.name,
+    deviceId: device.id,
     time: formatTimeAgo(timestamp),
     timestamp,
     severity: blocked ? "warning" : "info",
@@ -203,5 +209,5 @@ export function useFirebaseActivity(devices: Device[]) {
     return [...alertActivities, ...sensorActivities, ...deviceActivities, ...localUserActivities].sort((left, right) => right.timestamp - left.timestamp);
   }, [alertsById, devices, sensorByDevice, userActivities]);
 
-  return { activities, loading, error };
+  return { activities, loading, error, alertsById };
 }

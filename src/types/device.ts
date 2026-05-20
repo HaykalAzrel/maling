@@ -19,6 +19,10 @@ export interface DeviceConfigPayload {
     monitoring?: boolean;
     threshold?: number;
     schedule?: DeviceSchedulePayload;
+    notifications?: {
+        enabled?: boolean;
+    };
+    suppressAlertsUntil?: number;
     [key: string]: unknown;
 }
 

@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { QrCode, Clipboard, ArrowLeft, Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { QrCode, ClipboardList, ArrowLeft, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useFirebaseAuth } from "../../hooks/useFirebaseAuth";
 import { getDeviceById, upsertDevice } from "../../services/deviceService";
 import { recordUserActivity } from "../../services/activityHistoryService";
+import { SafeTopSpacer } from "../../hooks/usePullToRefresh";
+import { Clipboard } from "@capacitor/clipboard";
+import { Capacitor } from "@capacitor/core";
+import { useRef } from "react";
 
 type Step = "input" | "naming" | "validating" | "success" | "failed";
 
@@ -17,6 +21,8 @@ export function AddDevicePage() {
   const navigate = useNavigate();
   const { user } = useFirebaseAuth();
   const currentStepLabel = step === "naming" ? "Step 2 of 2" : "Step 1 of 2";
+  const [pasteFeedback, setPasteFeedback] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleValidate = async () => {
     setError("");
@@ -81,16 +87,17 @@ export function AddDevicePage() {
       await upsertDevice({
         deviceId: trimmedDeviceId,
         name: trimmedDeviceName,
-        location: "Firebase Device",
+        location: " New Device",
         monitoring: true,
         ownerId: user?.uid,
+        forceUpdate: true,
       });
 
       recordUserActivity({
         title: "Added device",
         device: trimmedDeviceId,
         severity: "success",
-        detail: "Device saved to Firebase",
+        detail: "Device saved",
       });
 
       setStep("success");
@@ -109,16 +116,44 @@ export function AddDevicePage() {
   };
 
   const handlePasteFromClipboard = async () => {
-    try {
+  setError("");
+  try {
+    if (Capacitor.isNativePlatform()) {
+      // ✅ Native iOS/Android — pakai Capacitor Clipboard
+      const { value } = await Clipboard.read();
+      if (value?.trim()) {
+        setDeviceId(value.trim());
+        setPasteFeedback(true);
+        setTimeout(() => setPasteFeedback(false), 1500);
+      } else {
+        setError("Clipboard kosong.");
+        setTimeout(() => setError(""), 2000);
+      }
+      } else {
+      // ✅ Web — pakai browser Clipboard API
       const text = await navigator.clipboard.readText();
-      setDeviceId(text);
-    } catch (err) {
-      console.error("Failed to read clipboard:", err);
+        if (text.trim()) {
+          setDeviceId(text.trim());
+          setPasteFeedback(true);
+          setTimeout(() => setPasteFeedback(false), 1500);
+        } else {
+          setError("Clipboard kosong.");
+          setTimeout(() => setError(""), 2000);
+        }
+      }
+    } catch {
+      // ✅ Fallback terakhir — fokus input
+      if (inputRef.current) {
+        inputRef.current.focus();
+        setError("Tekan dan tahan kolom Device ID lalu pilih Paste.");
+        setTimeout(() => setError(""), 3000);
+      }
     }
   };
 
   return (
     <div className="min-h-dvh bg-background pb-28 sm:pb-32">
+      <SafeTopSpacer />
       <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <div className="py-6 sm:py-8 lg:py-10 space-y-6 lg:space-y-8">
           <div className="flex items-center gap-4">
@@ -133,7 +168,7 @@ export function AddDevicePage() {
               <p className="text-sm text-muted-foreground">
                 {step === "input" && currentStepLabel}
                 {step === "naming" && currentStepLabel}
-                {step === "validating" && "Saving to Firebase"}
+                {step === "validating" && "Saving device"}
                 {step === "success" && "Device saved"}
                 {step === "failed" && "Save failed"}
               </p>
@@ -156,7 +191,7 @@ export function AddDevicePage() {
                     value={deviceId}
                     onChange={(e) => setDeviceId(e.target.value)}
                     placeholder="Enter device ID"
-                    className="w-full bg-input-background border border-border rounded-xl px-4 py-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="w-full bg-card text-foreground placeholder:text-muted-foreground border border-border rounded-xl px-4 py-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all autofill:bg-card"
                   />
                 </div>
 
@@ -169,15 +204,32 @@ export function AddDevicePage() {
                 <div className="flex gap-3">
                   <button
                     onClick={handlePasteFromClipboard}
-                    className="flex-1 bg-card border border-border py-3 rounded-xl hover:bg-accent transition-all flex items-center justify-center gap-2"
-                  >
-                    <Clipboard className="w-5 h-5" />
-                    Paste from Clipboard
-                  </button>
-                  <button className="flex-1 bg-card border border-border py-3 rounded-xl hover:bg-accent transition-all flex items-center justify-center gap-2">
-                    <QrCode className="w-5 h-5" />
-                    Scan QR Code
-                  </button>
+                    className={`flex-1 bg-card border py-3 px-2 rounded-xl transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 ${
+                      pasteFeedback
+                      ? "border-status-safe/50 bg-status-safe/10 text-status-safe"
+                      : "border-border hover:bg-accent"
+                      }`}
+                    >
+                    <ClipboardList className="w-5 h-5 shrink-0" />
+                      <span className="text-xs sm:text-sm text-center leading-tight">
+                        {pasteFeedback ? "Copied!" : (
+                        <>
+                          <span className="sm:hidden">Paste</span>
+                          <span className="hidden sm:inline">Paste from Clipboard</span>
+                        </>
+                        )}
+                      </span>
+                    </button>
+
+                    <button
+                      className="flex-1 bg-card border border-border py-3 px-2 rounded-xl hover:bg-accent transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2"
+                    >
+                      <QrCode className="w-5 h-5 shrink-0" />
+                        <span className="text-xs sm:text-sm text-center leading-tight">
+                            <span className="sm:hidden">Scan QR</span>
+                          <span className="hidden sm:inline">Scan QR Code</span>
+                        </span>
+                    </button>
                 </div>
 
                 <button
@@ -216,7 +268,7 @@ export function AddDevicePage() {
                     value={deviceName}
                     onChange={(e) => setDeviceName(e.target.value)}
                     placeholder="Example: Front Gate Sensor"
-                    className="w-full bg-input-background border border-border rounded-xl px-4 py-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="w-full bg-card text-foreground placeholder:text-muted-foreground border border-border rounded-xl px-4 py-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all autofill:bg-card"
                   />
                   <p className="text-xs text-muted-foreground">
                     Give the device a clear name so it is easier to find in the dashboard.
@@ -275,7 +327,7 @@ export function AddDevicePage() {
                   <CheckCircle2 className="w-16 h-16 mx-auto mb-6 text-status-safe" />
                 </motion.div>
                 <h3 className="text-xl mb-2">Device Added</h3>
-                <p className="text-muted-foreground">Saved to Firebase. Updating UI...</p>
+                <p className="text-muted-foreground">Saved successfully. Updating UI...</p>
               </motion.div>
             )}
 

@@ -13,8 +13,6 @@ import { Alert } from "../types/alert";
 
 import { SensorData } from "../types/sensor";
 
-import { subscribeDevice } from "./deviceService";
-
 const alertCooldownMap = new Map<string, number>();
 
 const ALERT_COOLDOWN_MS = 10_000;
@@ -35,6 +33,18 @@ const toTimestampMillis = (
         : value;
 };
 
+export const clearAlertsForDevices = async (deviceIds: string[]): Promise<void> => {
+    if (!database || deviceIds.length === 0) return;
+
+    const updates: Record<string, null> = {};
+
+    for (const deviceId of deviceIds) {
+        updates[`devices/${deviceId}/alerts`] = null;
+    }
+
+    await update(ref(database), updates);
+};
+
 const isAlertLikeRecord = (
     value: Record<string, unknown>
 ) =>
@@ -46,7 +56,8 @@ const isAlertLikeRecord = (
 
 const normalizeAlertEntry = (
     value: unknown,
-    fallbackKey: string
+    fallbackKey: string,
+    parentDeviceId?: string
 ): Alert | null => {
 
     if (!value || typeof value !== "object") {
@@ -69,8 +80,9 @@ const normalizeAlertEntry = (
         Date.now();
 
     const deviceId =
-        typeof record.deviceId === "string" &&
-        record.deviceId
+        typeof parentDeviceId === "string" && parentDeviceId
+            ? parentDeviceId
+            : typeof record.deviceId === "string" && record.deviceId
             ? record.deviceId
             : fallbackKey;
 
@@ -116,7 +128,8 @@ const normalizeAlertEntry = (
 };
 
 const normalizeAlertTree = (
-    value: unknown
+    value: unknown,
+    parentDeviceId?: string
 ): Record<string, Alert> => {
 
     if (!value || typeof value !== "object") {
@@ -131,7 +144,8 @@ const normalizeAlertTree = (
             const normalized =
                 normalizeAlertEntry(
                     entry,
-                    alertId
+                    alertId,
+                    parentDeviceId
                 );
 
             if (normalized) {
@@ -178,7 +192,9 @@ const buildBlockedAlert = (
 export const persistBlockedSensorAlert =
     async (
         deviceId: string,
-        sensor: SensorData
+        sensor: SensorData,
+        laserOn: boolean,
+        suppressAlertsUntil?: number
     ) => {
 
         if (!database) {
@@ -188,6 +204,12 @@ export const persistBlockedSensorAlert =
         if (sensor.laser !== "BLOCKED") {
             return;
         }
+
+        // ← Gate 1: laser dimatikan user → skip
+        if (!laserOn) return;
+
+        // ← Gate 2: masih dalam suppress window → skip
+        if (suppressAlertsUntil && Date.now() < suppressAlertsUntil) return;
 
         const now = Date.now();
 
@@ -284,20 +306,16 @@ export const subscribeAlert = (
     return onValue(
         alertRef,
         (snapshot) => {
-
             callback(
                 normalizeAlertTree(
-                    snapshot.val()
+                    snapshot.val(),
+                    deviceId
                 )
             );
-
         },
         (error) => {
-
             onError?.(error);
-
             callback({});
-
         }
     );
 };

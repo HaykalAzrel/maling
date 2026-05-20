@@ -5,7 +5,6 @@ import { getMessaging } from "firebase-admin/messaging";
 
 initializeApp();
 
-// Triggered when a new alert is written to /devices/{deviceId}/alerts/{alertId}
 export const onNewAlert = onValueCreated(
   {
     ref: "/devices/{deviceId}/alerts/{alertId}",
@@ -20,15 +19,29 @@ export const onNewAlert = onValueCreated(
 
     const db = getDatabase();
 
-    // Get device info to find the owner
+    // ✅ Cek suppressAlertsUntil — skip jika power toggle baru saja dilakukan
+    const suppressSnap = await db
+      .ref(`/devices/${deviceId}/config/suppressAlertsUntil`)
+      .get();
+    const suppressUntil = (suppressSnap.val() as number | null) ?? 0;
+    if (Date.now() < suppressUntil) return;
+
+    // Ambil info device untuk cari owner
     const deviceSnap = await db.ref(`/devices/${deviceId}`).get();
     const device = deviceSnap.val() as Record<string, unknown> | null;
     if (!device) return;
 
-    const ownerId = ((device.ownerId ?? device.owner) as string | undefined);
+    const ownerId = (device.ownerId ?? device.owner) as string | undefined;
     if (!ownerId) return;
 
-    // Get all registered FCM tokens for this user
+    // ✅ Cek notifikasi diaktifkan untuk device ini
+    const notifSnap = await db
+      .ref(`/devices/${deviceId}/config/notifications/enabled`)
+      .get();
+    const notificationsEnabled = notifSnap.val() !== false; // default true
+    if (!notificationsEnabled) return;
+
+    // Ambil semua FCM tokens milik user
     const tokensSnap = await db.ref(`/users/${ownerId}/fcmTokens`).get();
     const tokensData = tokensSnap.val() as Record<string, string> | null;
     if (!tokensData) return;
@@ -88,7 +101,7 @@ export const onNewAlert = onValueCreated(
       },
     });
 
-    // Clean up stale / invalid tokens
+    // ✅ Hapus token yang sudah tidak valid
     const tokenKeys = Object.keys(tokensData);
     const staleKeys = response.responses
       .map((resp, idx) =>
@@ -101,7 +114,9 @@ export const onNewAlert = onValueCreated(
       .filter((k): k is string => k !== null);
 
     await Promise.all(
-      staleKeys.map((key) => db.ref(`/users/${ownerId}/fcmTokens/${key}`).remove())
+      staleKeys.map((key) =>
+        db.ref(`/users/${ownerId}/fcmTokens/${key}`).remove()
+      )
     );
   }
 );

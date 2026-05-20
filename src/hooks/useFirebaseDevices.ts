@@ -42,30 +42,32 @@ export function useFirebaseDevices(deviceIds?: string[]) {
     // ✅ Mode 1: tanpa deviceIds → subscribe semua /devices, filter by owner
     if (deviceIdsKey === null) {
       const unsubscribe = subscribeDevice(
-        (allDevices) => {
-          const ownedDevices = Object.fromEntries(
-            Object.entries(allDevices).filter(([, device]) => {
-              const owner =
-                (device as Device & { ownerId?: string; owner?: string }).ownerId ||
-                (device as Device & { ownerId?: string; owner?: string }).owner;
-              // Tampilkan jika: belum ada owner, owner kosong, atau owner adalah user ini
-              return !owner || owner === "" || owner === user.uid;
-            })
-          );
-          setDevicesRef.current(ownedDevices);
-          setLoading(false);
-        },
-        (subscriptionError) => {
-          console.error("subscribeDevice error:", subscriptionError);
-          setError(
-            subscriptionError instanceof Error
-              ? subscriptionError.message
-              : "Unable to load devices."
-          );
-          setDevicesRef.current({});
-          setLoading(false);
-        }
-      );
+  (allDevices) => {
+    const ownedDevices = Object.fromEntries(
+      Object.entries(allDevices).filter(([, device]) => {
+        const owner =
+          (device as Device & { ownerId?: string; owner?: string }).ownerId ||
+          (device as Device & { ownerId?: string; owner?: string }).owner;
+
+        // ✅ Hanya tampilkan device yang explicitly milik user ini
+        // Hapus kondisi !owner — device tanpa owner tidak ditampilkan otomatis
+        return owner === user.uid;
+      })
+    );
+    setDevicesRef.current(ownedDevices);
+    setLoading(false);
+  },
+  (subscriptionError) => {
+    console.error("subscribeDevice error:", subscriptionError);
+    setError(
+      subscriptionError instanceof Error
+        ? subscriptionError.message
+        : "Unable to load devices."
+    );
+    setDevicesRef.current({});
+    setLoading(false);
+  }
+);
 
       return () => {
         if (typeof unsubscribe === "function") unsubscribe();
@@ -94,31 +96,41 @@ export function useFirebaseDevices(deviceIds?: string[]) {
     };
 
     const unsubscribers = ids.map((deviceId) =>
-      subscribeDeviceById(
-        deviceId,
-        (deviceData) => {
-          if (deviceData) {
-            currentDeviceMap[deviceId] = {
-              ...deviceData,
-              id: deviceData.id || deviceId,
-            };
-          } else {
-            delete currentDeviceMap[deviceId];
-          }
-          setDevicesRef.current({ ...currentDeviceMap });
+  subscribeDeviceById(
+    deviceId,
+    (deviceData) => {
+      if (deviceData) {
+        // ✅ Tambahkan guard: skip device yang bukan milik user ini
+        const owner =
+          (deviceData as Device & { ownerId?: string; owner?: string }).ownerId ||
+          (deviceData as Device & { ownerId?: string; owner?: string }).owner;
+
+        if (owner && owner !== user.uid) {
           markInitialLoaded(deviceId);
-        },
-        (subscriptionError) => {
-          console.error(subscriptionError);
-          setError(
-            subscriptionError instanceof Error
-              ? subscriptionError.message
-              : `Unable to load device ${deviceId}.`
-          );
-          markInitialLoaded(deviceId);
+          return;
         }
-      )
-    );
+
+        currentDeviceMap[deviceId] = {
+          ...deviceData,
+          id: deviceData.id || deviceId,
+        };
+      } else {
+        delete currentDeviceMap[deviceId];
+      }
+      setDevicesRef.current({ ...currentDeviceMap });
+      markInitialLoaded(deviceId);
+    },
+    (subscriptionError) => {
+      console.error(subscriptionError);
+      setError( 
+        subscriptionError instanceof Error
+          ? subscriptionError.message
+          : `Unable to load device ${deviceId}.`
+      );
+      markInitialLoaded(deviceId);
+    }
+  )
+);
 
     return () => {
       unsubscribers.forEach((unsubscribe) => {

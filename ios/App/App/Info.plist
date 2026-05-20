@@ -29,6 +29,8 @@
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 	<key>UIRequiredDeviceCapabilities</key>
+	<key>NSPasteboardUsageDescription</key>
+	<string>Digunakan untuk paste Device ID dari clipboard.</string>
 	<array>
 		<string>armv7</string>
 	</array>
