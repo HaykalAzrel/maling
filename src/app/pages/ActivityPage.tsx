@@ -6,8 +6,12 @@ import { useFirebaseActivity } from "../../hooks/useFirebaseActivity";
 import { usePullToRefresh, PullIndicator, SafeTopSpacer } from "../../hooks/usePullToRefresh";
 import { clearStoredUserActivities } from "../../services/activityHistoryService";
 import { clearAlertsForDevices } from "../../services/alertService";
+import { useFirebaseAuth } from "../../hooks/useFirebaseAuth";
+import { Device } from "../../types/device";
+import { saveClearedAt } from "../../services/activityHistoryService";
 
 type FilterType = "today" | "alerts" | "devices" | "all";
+
 
 export function ActivityPage() {
   const [filter, setFilter] = useState<FilterType>("all");
@@ -15,9 +19,12 @@ export function ActivityPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  
 
   const { devices, loading: devicesLoading, error: deviceError } = useFirebaseDevices();
-  const { activities, loading: activityLoading, error: activityError } = useFirebaseActivity(devices);
+  const { user } = useFirebaseAuth();
+
+  const { activities, loading: activityLoading, error: activityError, refreshClearedAt } = useFirebaseActivity(devices);
 
   // ── Pull-to-refresh ────────────────────────────────────────────────────
   const handleRefresh = useCallback(async () => {
@@ -30,36 +37,58 @@ export function ActivityPage() {
 
   // ── Clear history ──────────────────────────────────────────────────────
   const handleClearHistory = async () => {
-    setIsClearing(true);
-    try {
-      // 1. Hapus local storage
-      clearStoredUserActivities();
+  setIsClearing(true);
+  try {
+    clearStoredUserActivities();
+    const deviceIds = devices.map((d) => d.id);
+    await clearAlertsForDevices(deviceIds);
+    await saveClearedAt(deviceIds);
 
-      // 2. Hapus alerts di Firebase untuk semua device milik user
-      const deviceIds = devices.map((d) => d.id);
-      await clearAlertsForDevices(deviceIds);
-
-      setRefreshKey((k) => k + 1);
-    } catch (error) {
-      console.error("Failed to clear history:", error);
-    } finally {
-      setIsClearing(false);
-      setShowClearConfirm(false);
-    }
-  };
+    // ← panggil keduanya
+    refreshClearedAt();
+    setRefreshKey((k) => k + 1);
+  } catch (error) {
+    console.error("Failed to clear history:", error);
+  } finally {
+    setIsClearing(false);
+    setShowClearConfirm(false);
+  }
+};
 
   // ── Filtering ──────────────────────────────────────────────────────────
+  const isAlertActivity = (activity: (typeof activities)[number]) =>
+    activity.source === "alert" ||
+    activity.type === "alert" ||
+    activity.severity === "critical" ||
+    activity.severity === "warning" ||
+    activity.title.toLowerCase().includes("intrusion") ||
+    activity.title.toLowerCase().includes("alert") ||
+    (activity.type === "sensor" && activity.title.toLowerCase().includes("blocked"));
+
+  const isDeviceActivity = (activity: (typeof activities)[number]) =>
+    activity.source === "device" &&
+    activity.type !== "alert" &&
+    !activity.title.toLowerCase().includes("intrusion") &&
+    !activity.title.toLowerCase().includes("alert");
+
   const filteredActivities = activities
     .filter((activity) => {
       if (filter === "all") return true;
-      if (filter === "today") return true;
-      if (filter === "alerts") return activity.severity === "critical";
-      if (filter === "devices")
+      if (filter === "today") {
+        const today = new Date();
+        const activityDate = new Date(activity.timestamp);
         return (
-          activity.type === "success" ||
-          activity.type === "offline" ||
-          activity.type === "sensor"
+          activityDate.getDate() === today.getDate() &&
+          activityDate.getMonth() === today.getMonth() &&
+          activityDate.getFullYear() === today.getFullYear()
         );
+      }
+      if (filter === "alerts") {
+        return isAlertActivity(activity);
+      }
+      if (filter === "devices") {
+        return isDeviceActivity(activity) && !isAlertActivity(activity);
+      }
       return true;
     })
     .filter(
@@ -98,6 +127,8 @@ export function ActivityPage() {
         return "bg-primary/10 text-primary border-primary/30";
     }
   };
+
+  console.log('filteredActivities', filter, filteredActivities.map(a => ({ title: a.title, device: a.device, time: a.time, severity: a.severity })));
 
   return (
     <div className="min-h-dvh bg-background pb-28 sm:pb-32" {...touchHandlers}>
@@ -200,47 +231,38 @@ export function ActivityPage() {
             <div className="rounded-xl border border-status-alert/30 bg-status-alert/10 p-4 text-sm text-status-alert text-center py-16">
               {deviceError || activityError}
             </div>
-          ) : devicesLoading || activityLoading ? (
-            <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground text-center py-16">
-              Loading activity...
-            </div>
-          ) : filteredActivities.length === 0 ? (
-            <div className="text-center py-16 px-4">
-              <div className="w-24 h-24 mx-auto mb-6 bg-muted/50 rounded-3xl flex items-center justify-center">
-                <ActivityIcon className="w-12 h-12 text-muted-foreground" />
+            ) : devicesLoading || activityLoading ? (
+              <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground text-center py-16">
+                Loading activity...
               </div>
-              <h3 className="text-xl mb-2">No Activities Found</h3>
-              <p className="text-muted-foreground">
-                {searchQuery
-                  ? "Try adjusting your search"
-                  : devicesLoading || activityLoading
-                  ? "Waiting for records"
-                  : "No activity yet"}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredActivities.map((activity, index) => (
-                <motion.div
-                  key={`${activity.id}-${refreshKey}`}
+            ) : filteredActivities.length === 0 ? (
+              <div className="text-center py-16 px-4">
+                <div className="w-24 h-24 mx-auto mb-6 bg-muted/50 rounded-3xl flex items-center justify-center">
+                  <ActivityIcon className="w-12 h-12 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl mb-2">No Activities Found</h3>
+                <p className="text-muted-foreground">
+                  {searchQuery ? "Try adjusting your search" : "No activity yet"}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3" key={filter}>
+                {filteredActivities.map((activity, index) => (
+                  <motion.div
+                  key={`${filter}-${activity.id}-${refreshKey}`}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.05 * index }}
                   className={`border rounded-xl p-4 sm:p-5 ${getColor(activity.severity)}`}
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-4">
-                    <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                        activity.severity === "critical"
-                          ? "bg-status-alert/20"
-                          : activity.severity === "warning"
-                          ? "bg-status-warning/20"
-                          : activity.severity === "success"
-                          ? "bg-status-safe/20"
-                          : "bg-primary/20"
-                      }`}
-                    >
-                      {getIcon(activity.type)}
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                      activity.severity === "critical" ? "bg-status-alert/20"
+                      : activity.severity === "warning" ? "bg-status-warning/20"
+                      : activity.severity === "success" ? "bg-status-safe/20"
+                      : "bg-primary/20"
+                    }`}>
+                    {getIcon(activity.type)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="mb-1 break-words">{activity.title}</h4>
@@ -249,9 +271,11 @@ export function ActivityPage() {
                       </p>
                     </div>
                     <div className="text-sm text-muted-foreground whitespace-nowrap self-start sm:ml-auto">
-                      {new Date(activity.timestamp).toLocaleTimeString([], {
+                      {new Date(activity.timestamp).toLocaleTimeString("id-ID", {
                         hour: "2-digit",
                         minute: "2-digit",
+                        hour12: false,
+                        timeZone: "Asia/Jakarta",
                       })}
                     </div>
                   </div>

@@ -6,7 +6,8 @@ import { persistBlockedSensorAlert } from "./alertService";
 export const subscribeSensorData = (
     deviceId: string,
     callback: (data: SensorData | null) => void,
-    onError?: (error: unknown) => void
+    onError?: (error: unknown) => void,
+    laserOn?: boolean
 ) => {
     const firebaseDatabase = database;
 
@@ -33,7 +34,7 @@ export const subscribeSensorData = (
                 currentValues[key] = nextValue;
 
                 if (nextValue?.laser === "BLOCKED") {
-                    void persistBlockedSensorAlert(deviceId, nextValue);
+                    void persistBlockedSensorAlert(deviceId, nextValue, laserOn ?? false);
                 }
 
                 emitCurrentValue();

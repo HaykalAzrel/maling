@@ -6,7 +6,7 @@ import { useFirebaseDevices } from "../../hooks/useFirebaseDevices";
 import { usePullToRefresh, PullIndicator, SafeTopSpacer } from "../../hooks/usePullToRefresh";
 import { isDeviceAlive } from "../../hooks/useDeviceAlive"; // ✅
 
-type FilterType = "all" | "online" | "offline" | "alert";
+type FilterType = "all" | "online" | "offline" ;
 
 const toSignalStrength = (rssi?: number) => {
   if (typeof rssi !== "number") return 0;
@@ -52,7 +52,6 @@ export function DevicesPage() {
       if (filter === "all")     return true;
       if (filter === "online")  return alive;
       if (filter === "offline") return !alive;
-      if (filter === "alert")   return device.monitoring === false;
       return true;
     })
     .filter(
@@ -64,13 +63,11 @@ export function DevicesPage() {
   // ✅ Counter badge filter juga dari lastSeen
   const onlineCount  = devices.filter((d) => isDeviceAlive(d)).length;
   const offlineCount = devices.filter((d) => !isDeviceAlive(d)).length;
-  const alertCount   = devices.filter((d) => d.monitoring === false).length;
 
   const filterLabels: Record<FilterType, string> = {
     all:     `All (${devices.length})`,
     online:  `Online (${onlineCount})`,
     offline: `Offline (${offlineCount})`,
-    alert:   `Alert (${alertCount})`,
   };
 
   return (
@@ -101,7 +98,7 @@ export function DevicesPage() {
 
           {/* ── Filter tabs (dengan counter dari lastSeen) ────────────── */}
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0">
-            {(["all", "online", "offline", "alert"] as FilterType[]).map((f) => (
+            {(["all", "online", "offline"] as FilterType[]).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
@@ -148,6 +145,7 @@ export function DevicesPage() {
               {filteredDevices.map((device, index) => {
                 // ✅ Status visual murni dari lastSeen
                 const alive = isDeviceAlive(device);
+                const isMonitoring = device.monitoring ?? device.config?.monitoring ?? false;
 
                 return (
                   <motion.div
@@ -158,6 +156,8 @@ export function DevicesPage() {
                     onClick={() => navigate(`/devices/${device.id}`)}
                     className={`p-4 sm:p-5 rounded-xl border cursor-pointer transition-all ${
                       !alive
+                        ? "bg-status-warning/10 border-status-warning/30"
+                        : !isMonitoring
                         ? "bg-status-warning/10 border-status-warning/30"
                         : "bg-card border-border hover:border-primary/50"
                     }`}
@@ -191,10 +191,12 @@ export function DevicesPage() {
                             className={`text-sm px-3 py-1 rounded-lg inline-flex self-start shrink-0 ${
                               !alive
                                 ? "bg-status-offline/20 text-status-offline"
-                                : "bg-status-safe/20 text-status-safe"
+                                : isMonitoring
+                                ? "bg-status-safe/20 text-status-safe"
+                                : "bg-status-warning/20 text-status-warning"
                             }`}
                           >
-                            {alive ? "ONLINE" : "NO SIGNAL"}
+                            {!alive ? "NO SIGNAL" : isMonitoring ? "ONLINE" : "OFFLINE"}
                           </div>
                         </div>
 

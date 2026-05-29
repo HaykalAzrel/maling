@@ -16,7 +16,10 @@ const config: CapacitorConfig = {
     },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
-    }
+    },
+    OneSignal: {
+      appId: 'd14e617b-e55d-4350-af1f-c8c59af36d69',  // dari OneSignal Dashboard
+    },
   }
 };
 

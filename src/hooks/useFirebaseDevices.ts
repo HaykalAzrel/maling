@@ -49,9 +49,9 @@ export function useFirebaseDevices(deviceIds?: string[]) {
           (device as Device & { ownerId?: string; owner?: string }).ownerId ||
           (device as Device & { ownerId?: string; owner?: string }).owner;
 
-        // ✅ Hanya tampilkan device yang explicitly milik user ini
-        // Hapus kondisi !owner — device tanpa owner tidak ditampilkan otomatis
-        return owner === user.uid;
+        const sharedWith = device.sharedWith ?? [];
+
+    return owner === user.uid || sharedWith.includes(user.uid);
       })
     );
     setDevicesRef.current(ownedDevices);
@@ -105,10 +105,14 @@ export function useFirebaseDevices(deviceIds?: string[]) {
           (deviceData as Device & { ownerId?: string; owner?: string }).ownerId ||
           (deviceData as Device & { ownerId?: string; owner?: string }).owner;
 
-        if (owner && owner !== user.uid) {
-          markInitialLoaded(deviceId);
-          return;
-        }
+        const sharedWith = deviceData.sharedWith ?? [];
+        const isOwner = owner === user.uid;
+        const isShared = sharedWith.includes(user.uid);
+
+      if (owner && !isOwner && !isShared) {
+        markInitialLoaded(deviceId);
+      return;
+      }
 
         currentDeviceMap[deviceId] = {
           ...deviceData,

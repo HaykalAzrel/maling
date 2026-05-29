@@ -38,6 +38,7 @@ const normalizeDevice = (id: string, record: DeviceRecord): Device => {
     const threshold  = record.threshold  ?? config.threshold;
     const schedule   = record.schedule   ?? config.schedule ?? undefined;
     const ownerId    = record.ownerId    ?? record.owner   ?? undefined;
+    const sharedWith = record.sharedWith ?? [];
 
     return {
         ...record,
@@ -68,6 +69,7 @@ const normalizeDevice = (id: string, record: DeviceRecord): Device => {
         info,
         sensor,
         ownerId,
+        sharedWith,
     };
 };
 
@@ -128,6 +130,20 @@ export const getDeviceById = async (deviceId: string): Promise<Device | null> =>
         return rawValue ? normalizeDevice(deviceKey, rawValue as DeviceRecord) : null;
     } catch (error) {
         console.warn(`getDeviceById(${deviceKey}) failed, treating as unclaimed:`, error);
+        return null;
+    }
+};
+
+// ── Ambil data user by uid ─────────────────────────────────────────────────
+export const getUserByUid = async (uid: string): Promise<{ uid: string; email: string; displayName: string | null } | null> => {
+    if (!database) return null;
+
+    try {
+        const snapshot = await get(ref(database, `users/${uid}`));
+        if (!snapshot.exists()) return null;
+        return snapshot.val();
+    } catch (error) {
+        console.error("getUserByUid failed:", error);
         return null;
     }
 };
@@ -262,7 +278,6 @@ export const removeDevice = async (deviceId: string): Promise<void> => {
     }
 
     const key = sanitizeDeviceKey(deviceId);
-
     if (!key) {
         throw new Error("Device ID is required.");
     }
@@ -363,4 +378,77 @@ export const setAllDevicesPowered = async (enabled: boolean, devices: Device[]) 
     }, {});
 
     await update(ref(database), payload);
+};
+
+// ── User search by email ───────────────────────────────────────────────────
+export const searchUserByEmail = async (email: string): Promise<{ uid: string; displayName: string | null; email: string } | null> => {
+    if (!database) {
+        throw new Error("Firebase Realtime Database is not configured.");
+    }
+
+    const trimmedEmail = email.trim().toLowerCase();
+
+    if (!trimmedEmail) {
+        throw new Error("Email is required.");
+    }
+
+    try {
+        const snapshot = await get(ref(database, "users"));
+        if (!snapshot.exists()) return null;
+
+        const users = snapshot.val() as Record<string, { uid: string; email: string; displayName: string | null }>;
+
+        const found = Object.values(users).find(
+            (u) => u.email?.toLowerCase() === trimmedEmail
+        );
+
+        return found ?? null;
+    } catch (error) {
+        console.error("searchUserByEmail failed:", error);
+        return null;
+    }
+};
+
+// ── Share device dengan user lain ─────────────────────────────────────────
+export const shareDeviceWithUser = async (deviceId: string, targetUid: string): Promise<void> => {
+    if (!database) {
+        throw new Error("Firebase Realtime Database is not configured.");
+    }
+
+    const key = sanitizeDeviceKey(deviceId);
+
+    if (!key) {
+        throw new Error("Device ID is required.");
+    }
+
+    // Ambil sharedWith yang sudah ada
+    const snapshot = await get(ref(database, `devices/${key}/sharedWith`));
+    const current: string[] = snapshot.val() ?? [];
+
+    // Cegah duplikat
+    if (current.includes(targetUid)) {
+        throw new Error("User sudah memiliki akses ke device ini.");
+    }
+
+    await set(ref(database, `devices/${key}/sharedWith`), [...current, targetUid]);
+};
+
+// ── Hapus akses user dari device ──────────────────────────────────────────
+export const removeSharedUser = async (deviceId: string, targetUid: string): Promise<void> => {
+    if (!database) {
+        throw new Error("Firebase Realtime Database is not configured.");
+    }
+
+    const key = sanitizeDeviceKey(deviceId);
+
+    if (!key) {
+        throw new Error("Device ID is required.");
+    }
+
+    const snapshot = await get(ref(database, `devices/${key}/sharedWith`));
+    const current: string[] = snapshot.val() ?? [];
+
+    const updated = current.filter((uid) => uid !== targetUid);
+
+    await set(ref(database, `devices/${key}/sharedWith`), updated);
 };

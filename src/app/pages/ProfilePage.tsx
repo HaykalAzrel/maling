@@ -283,8 +283,8 @@ export function ProfilePage() {
             </button>
 
             <div className="pt-2 text-center text-sm text-muted-foreground">
-              <p>SecureSense v2.1.0</p>
-              <p className="mt-1">© 2026 SecureSense. All rights reserved.</p>
+              <p>Securo v1.1.0</p>
+              <p className="mt-1">© 2026 Securo. All rights reserved.</p>
             </div>
           </div>
         </div>

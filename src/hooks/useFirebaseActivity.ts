@@ -5,10 +5,15 @@ import { subscribeSensorData } from "../services/sensorService";
 import { Alert } from "../types/alert";
 import { Device } from "../types/device";
 import { SensorData } from "../types/sensor";
+import { getClearedAt } from "../services/activityHistoryService";
+import { useFirebaseAuth } from "./useFirebaseAuth";
+import { onValue, ref } from "firebase/database";
+import { database } from "../firebase/config";
 
 export type ActivityItem = {
   id: string;
   type: "alert" | "warning" | "success" | "info" | "offline" | "sensor" | "user";
+  source: "alert" | "device" | "sensor" | "user";
   title: string;
   device: string;
   deviceId?: string;
@@ -17,7 +22,7 @@ export type ActivityItem = {
   severity: "critical" | "warning" | "success" | "info";
 };
 
-const formatTimeAgo = (timestamp: number) => {
+export const formatTimeAgo = (timestamp: number) => {
   const elapsed = Date.now() - timestamp;
 
   if (elapsed < 60_000) {
@@ -41,24 +46,40 @@ const formatTimeAgo = (timestamp: number) => {
   return `${days} day${days === 1 ? "" : "s"} ago`;
 };
 
-const activityFromAlert = (alert: Alert, device?: Device): ActivityItem => ({
-  id: `${alert.deviceId}-${alert.timestamp}`,
-  type: alert.status === "resolved" ? "success" : alert.status === "read" ? "info" : "alert",
-  title:
-    alert.type === "intruder_detected"
-      ? "Intrusion Detected"
-      : "Device Alert",
-  device: alert.deviceName || device?.name || alert.deviceId,
-  deviceId: alert.deviceId,
-  time: formatTimeAgo(alert.timestamp),
-  timestamp: alert.timestamp,
-  severity:
-    alert.status === "resolved" ? "success" : alert.status === "read" ? "info" : "critical",
-});
+const normalizeTimestamp = (ts: number) =>
+  ts < 1_000_000_000_000 ? ts * 1000 : ts;
+
+const activityFromAlert = (alert: Alert, device?: Device): ActivityItem => {
+  console.log("alert raw timestamp:", alert.timestamp, "→", new Date(alert.timestamp).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }));
+    // ← Cek laser_on saat alert dibuat
+    const laserOn = device?.laserOn ?? device?.laser_on ?? true;
+    
+    // Kalau laser sedang mati, downgrade severity supaya tidak trigger alarm
+    const isLaserOff = !laserOn;
+
+    return {
+        id: `${alert.deviceId}-${alert.timestamp}`,
+        type: alert.status === "resolved" ? "success" : 
+              alert.status === "read" ? "info" : 
+              isLaserOff ? "info" : "alert",  // ← downgrade kalau laser off
+        source: "alert",
+        title: alert.type === "intruder_detected"
+            ? "Intrusion Detected"
+            : "Device Alert",
+        device: alert.deviceName || device?.name || alert.deviceId,
+        deviceId: alert.deviceId,
+        time: formatTimeAgo(normalizeTimestamp(alert.timestamp)),
+        timestamp: normalizeTimestamp(alert.timestamp),
+        severity: alert.status === "resolved" ? "success" : 
+                  alert.status === "read" ? "info" : 
+                  isLaserOff ? "info" : "critical",  // ← tidak critical kalau laser off
+    };
+};
 
 const activityFromDevice = (device: Device): ActivityItem => ({
   id: `${device.id}-status-${device.lastSeen}`,
   type: device.status === "offline" ? "offline" : device.monitoring ? "success" : "info",
+  source: "device",
   title:
     device.status === "offline"
       ? "Device Offline"
@@ -69,8 +90,8 @@ const activityFromDevice = (device: Device): ActivityItem => ({
       : "Monitoring Disabled",
   device: device.name,
   deviceId: device.id,
-  time: formatTimeAgo(device.lastSeen),
-  timestamp: device.lastSeen,
+  time: formatTimeAgo(normalizeTimestamp(device.lastSeen)), // ← tambah ini
+  timestamp: normalizeTimestamp(device.lastSeen),
   severity: device.status === "offline" ? "warning" : device.monitoring ? "success" : "info",
 });
 
@@ -80,6 +101,11 @@ const activityFromSensor = (device: Device, sensor: SensorData): ActivityItem | 
   if (!timestamp) {
     return null;
   }
+  console.log("raw sensor timestamp:", timestamp, new Date(timestamp).toLocaleString());
+
+  const normalizedTimestamp = normalizeTimestamp(timestamp);
+
+  console.log("normalized timestamp:", normalizedTimestamp, new Date(normalizedTimestamp).toLocaleString());
 
   const hasLaser = typeof sensor.laser === "string";
   const hasLdr = typeof sensor.ldr_raw === "number";
@@ -102,11 +128,12 @@ const activityFromSensor = (device: Device, sensor: SensorData): ActivityItem | 
   return {
     id: `${device.id}-sensor-${timestamp}`,
     type: "sensor",
+    source: "sensor",
     title: `${title}${messageSuffix}`,
     device: device.name,
     deviceId: device.id,
-    time: formatTimeAgo(timestamp),
-    timestamp,
+    time: formatTimeAgo(normalizedTimestamp), // ← tambah ini
+    timestamp: normalizedTimestamp,
     severity: blocked ? "warning" : "info",
   };
 };
@@ -117,7 +144,21 @@ export function useFirebaseActivity(devices: Device[]) {
   const [userActivities, setUserActivities] = useState<StoredActivityEntry[]>(() => getStoredUserActivities());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useFirebaseAuth();
+  const [clearedAt, setClearedAt] = useState<number>(0);
 
+  // ← useEffect 1: fetch clearedAt
+  useEffect(() => {
+  if (devices.length === 0) return;
+  const deviceIds = devices.map((d) => d.id);
+  console.log("devices for clearedAt:", deviceIds);
+  getClearedAt(deviceIds).then((timestamp) => {
+    console.log("clearedAt result:", timestamp, new Date(timestamp).toLocaleString());
+    setClearedAt(timestamp);
+  });
+}, [devices]);
+
+  // ← useEffect 2: subscribe alerts dan sensor
   useEffect(() => {
     setLoading(true);
     setError(null);
@@ -153,21 +194,35 @@ export function useFirebaseActivity(devices: Device[]) {
     setLoading(false);
 
     return () => {
-      if (typeof unsubscribeAlerts === "function") {
-        unsubscribeAlerts();
-      }
-
+      if (typeof unsubscribeAlerts === "function") unsubscribeAlerts();
       unsubscribers.forEach((unsubscribe) => {
-        if (typeof unsubscribe === "function") {
-          unsubscribe();
-        }
+        if (typeof unsubscribe === "function") unsubscribe();
       });
     };
   }, [devices]);
 
+  // ← useEffect 3: subscribe clearedAt realtime (taruh di sini)
+useEffect(() => {
+  if (!database || devices.length === 0) return;
+  const db = database!;
+
+  const unsubscribers = devices.map((device) =>
+    onValue(ref(db, `devices/${device.id}/clearedAt`), (snapshot) => {
+      const timestamp = (snapshot.val() as number | null) ?? 0;
+      setClearedAt((current) => Math.max(current, timestamp));
+    })
+  );
+
+  return () => {
+    unsubscribers.forEach((unsubscribe) => {
+      if (typeof unsubscribe === "function") unsubscribe();
+    });
+  };
+}, [devices]);
+
+  // ← useEffect 4: subscribe local activities
   useEffect(() => {
     const unsubscribe = subscribeUserActivities(setUserActivities);
-
     return unsubscribe;
   }, []);
 
@@ -186,19 +241,16 @@ export function useFirebaseActivity(devices: Device[]) {
     const sensorActivities = devices
       .map((device) => sensorByDevice[device.id] ?? device.sensor ?? null)
       .flatMap((sensor, index) => {
-        if (!sensor) {
-          return [];
-        }
-
+        if (!sensor) return [];
         const device = devices[index];
         const activity = activityFromSensor(device, sensor);
-
         return activity ? [activity] : [];
       });
 
     const localUserActivities = userActivities.map<ActivityItem>((activity) => ({
       id: activity.id,
       type: activity.type,
+      source: "user",
       title: activity.title,
       device: activity.device,
       time: formatTimeAgo(activity.timestamp),
@@ -206,8 +258,15 @@ export function useFirebaseActivity(devices: Device[]) {
       severity: activity.severity,
     }));
 
-    return [...alertActivities, ...sensorActivities, ...deviceActivities, ...localUserActivities].sort((left, right) => right.timestamp - left.timestamp);
-  }, [alertsById, devices, sensorByDevice, userActivities]);
+    // ← filter berdasarkan clearedAt
+    return [...alertActivities, ...sensorActivities, ...deviceActivities, ...localUserActivities]
+      .filter((activity) => activity.timestamp > clearedAt)
+      .sort((left, right) => right.timestamp - left.timestamp);
+  }, [alertsById, devices, sensorByDevice, userActivities, clearedAt]);
 
-  return { activities, loading, error, alertsById };
+  return { activities, loading, error, alertsById, refreshClearedAt: () => {
+  if (devices.length === 0) return;
+  const deviceIds = devices.map((d) => d.id);
+  getClearedAt(deviceIds).then(setClearedAt);
+}};
 }

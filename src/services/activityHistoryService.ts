@@ -1,3 +1,6 @@
+import { ref, set, get, update } from "firebase/database";
+import { database } from "../firebase/config";
+
 const ACTIVITY_HISTORY_KEY = "secureSense:activity-history";
 const ACTIVITY_HISTORY_EVENT = "secureSense-activity-history-changed";
 
@@ -11,6 +14,28 @@ export type StoredActivityEntry = {
     severity: ActivitySeverity;
     timestamp: number;
     detail?: string;
+};
+
+// Simpan clearedAt ke setiap device yang dihapus
+export const saveClearedAt = async (deviceIds: string[]): Promise<void> => {
+  if (!database || deviceIds.length === 0) return;
+  const db = database!; // ← tambah ini
+  const now = Date.now();
+  const updates: Record<string, number> = {};
+  deviceIds.forEach((deviceId) => {
+    updates[`devices/${deviceId}/clearedAt`] = now;
+  });
+  await update(ref(db), updates);
+};
+
+export const getClearedAt = async (deviceIds: string[]): Promise<number> => {
+  if (!database || deviceIds.length === 0) return 0;
+  const db = database!; // ← tambah ini
+  const snapshots = await Promise.all(
+    deviceIds.map((deviceId) => get(ref(db, `devices/${deviceId}/clearedAt`)))
+  );
+  const timestamps = snapshots.map((snap) => (snap.val() as number | null) ?? 0);
+  return Math.max(0, ...timestamps);
 };
 
 const getWindowObject = () => (typeof window === "undefined" ? null : window);

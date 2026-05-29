@@ -1,0 +1,109 @@
+{
+    "name": "",
+    "type": "folder",
+    "children": [
+        {
+            "name": "lib",
+            "type": "folder",
+            "children": [
+                {
+                    "name": "alertNotifier.js",
+                    "type": "file",
+                    "extension": ".js",
+                    "size_mb": 0.0043,
+                    "path": "./lib\\alertNotifier.js"
+                },
+                {
+                    "name": "alertNotifier.js.map",
+                    "type": "file",
+                    "extension": ".map",
+                    "size_mb": 0.0031,
+                    "path": "./lib\\alertNotifier.js.map"
+                },
+                {
+                    "name": "index.js",
+                    "type": "file",
+                    "extension": ".js",
+                    "size_mb": 0.0061,
+                    "path": "./lib\\index.js"
+                },
+                {
+                    "name": "index.js.map",
+                    "type": "file",
+                    "extension": ".map",
+                    "size_mb": 0.005,
+                    "path": "./lib\\index.js.map"
+                },
+                {
+                    "name": "scheduleRunner.js",
+                    "type": "file",
+                    "extension": ".js",
+                    "size_mb": 0.0043,
+                    "path": "./lib\\scheduleRunner.js"
+                },
+                {
+                    "name": "scheduleRunner.js.map",
+                    "type": "file",
+                    "extension": ".map",
+                    "size_mb": 0.003,
+                    "path": "./lib\\scheduleRunner.js.map"
+                }
+            ]
+        },
+        {
+            "name": "main.py",
+            "type": "file",
+            "extension": ".py",
+            "size_mb": 0.0032,
+            "path": "./main.py"
+        },
+        {
+            "name": "package-lock.json",
+            "type": "file",
+            "extension": ".json",
+            "size_mb": 0.1038,
+            "path": "./package-lock.json"
+        },
+        {
+            "name": "package.json",
+            "type": "file",
+            "extension": ".json",
+            "size_mb": 0.0005,
+            "path": "./package.json"
+        },
+        {
+            "name": "src",
+            "type": "folder",
+            "children": [
+                {
+                    "name": "alertNotifier.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.005,
+                    "path": "./src\\alertNotifier.ts"
+                },
+                {
+                    "name": "index.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.0059,
+                    "path": "./src\\index.ts"
+                },
+                {
+                    "name": "scheduleRunner.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.0053,
+                    "path": "./src\\scheduleRunner.ts"
+                }
+            ]
+        },
+        {
+            "name": "tsconfig.json",
+            "type": "file",
+            "extension": ".json",
+            "size_mb": 0.0003,
+            "path": "./tsconfig.json"
+        }
+    ]
+}

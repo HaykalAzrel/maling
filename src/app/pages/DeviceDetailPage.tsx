@@ -3,12 +3,12 @@ import { useNavigate, useParams } from "react-router";
 import { ArrowLeft, Clock, Trash2, Shield, Wifi, WifiOff } from "lucide-react";
 import { motion } from "motion/react";
 import { useFirebaseDevices } from "../../hooks/useFirebaseDevices";
-import { removeDevice, setDevicePowered, updateDeviceNotificationPreference, updateDeviceSchedule } from "../../services/deviceService";
 import { recordUserActivity } from "../../services/activityHistoryService";
 import { usePullToRefresh, PullIndicator, SafeTopSpacer } from "../../hooks/usePullToRefresh";
 import { useFirebaseAuth } from "../../hooks/useFirebaseAuth";
 import { Device } from "../../types/device";
 import { useDeviceAlive } from "../../hooks/useDeviceAlive";
+import { removeDevice, setDevicePowered, updateDeviceNotificationPreference, updateDeviceSchedule, searchUserByEmail, shareDeviceWithUser, removeSharedUser, getUserByUid } from "../../services/deviceService";
 
 const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const defaultDays = [true, true, true, true, true, false, false];
@@ -64,7 +64,13 @@ export function DeviceDetailPage() {
   const [isRemoving, setIsRemoving] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isTogglingPower, setIsTogglingPower] = useState(false);
-  const lastAppliedScheduleState = useRef<boolean | null>(null);
+  const [shareEmail, setShareEmail] = useState("");
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareError, setShareError] = useState<string | null>(null);
+  const [shareSuccess, setShareSuccess] = useState<string | null>(null);
+  const [removingUid, setRemovingUid] = useState<string | null>(null);
+
+  const [sharedUserDetails, setSharedUserDetails] = useState<Record<string, { email: string; displayName: string | null }>>({});
 
   // ── Clock tick ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -88,15 +94,19 @@ export function DeviceDetailPage() {
   ? !deviceOwner || deviceOwner === user?.uid
   : true;
 
+  const isSharedUser = device
+  ? (device.sharedWith ?? []).includes(user?.uid ?? "")
+  : false;
+
   useEffect(() => {
-  if (!loading && device && !isOwner) {
+  if (!loading && device && !isOwner && !isSharedUser) {
     navigate("/devices");
   }
-}, [loading, device, isOwner, navigate]);
+}, [loading, device, isOwner, isSharedUser, navigate]);
 
   const isMonitoringEnabled =
-  device?.monitoring !== false &&
-  device?.laserOn !== false;
+  (device?.monitoring ?? device?.config?.monitoring) !== false &&
+  (device?.laser_on ?? device?.laserOn ?? device?.config?.laser_on) !== false;
 
   const effectiveOnline = isAlive;
   const isOfflineByTimeout = device !== undefined && !isAlive;
@@ -122,6 +132,34 @@ export function DeviceDetailPage() {
 
     setPushNotification(deviceNotificationEnabled);
   }, [deviceNotificationEnabled]);
+
+  useEffect(() => {
+  const sharedWith = device?.sharedWith ?? [];
+  if (sharedWith.length === 0) {
+    setSharedUserDetails({});
+    return;
+  }
+
+  const fetchUsers = async () => {
+    const results = await Promise.all(
+      sharedWith.map((uid) => getUserByUid(uid))
+    );
+
+    const details: Record<string, { email: string; displayName: string | null }> = {};
+    results.forEach((userData, index) => {
+      if (userData) {
+        details[sharedWith[index]] = {
+          email: userData.email,
+          displayName: userData.displayName,
+        };
+      }
+    });
+
+    setSharedUserDetails(details);
+  };
+
+  void fetchUsers();
+}, [device?.sharedWith]);
 
   const persistSchedule = useCallback(
     async (nextSchedule: {
@@ -185,6 +223,47 @@ export function DeviceDetailPage() {
     }
   };
 
+  const handleShareDevice = async () => {
+  if (!device || !shareEmail.trim()) return;
+  setShareLoading(true);
+  setShareError(null);
+  setShareSuccess(null);
+
+  try {
+    const found = await searchUserByEmail(shareEmail);
+    if (!found) {
+      setShareError("User dengan email tersebut tidak ditemukan.");
+      return;
+    }
+    if (found.uid === user?.uid) {
+      setShareError("Tidak bisa berbagi device ke diri sendiri.");
+      return;
+    }
+    await shareDeviceWithUser(device.id, found.uid);
+    setShareSuccess(`Akses diberikan ke ${found.email}.`);
+    setShareEmail("");
+  } catch (error) {
+    setShareError(
+      error instanceof Error ? error.message : "Gagal memberikan akses."
+    );
+  } finally {
+    setShareLoading(false);
+  }
+};
+
+const handleRemoveSharedUser = async (targetUid: string) => {
+  if (!device) return;
+  setRemovingUid(targetUid);
+  try {
+    await removeSharedUser(device.id, targetUid);
+  } catch (error) {
+    console.error("Failed to remove shared user:", error);
+  } finally {
+    setRemovingUid(null);
+  }
+};
+
+
   // ── Schedule logic ────────────────────────────────────────────────────
   const currentMinutes =
     currentTime.getHours() * 60 + currentTime.getMinutes();
@@ -214,46 +293,16 @@ export function DeviceDetailPage() {
     ? "Waiting for time window"
     : "Waiting for selected day";
 
-  useEffect(() => {
-    if (!device || !scheduleEnabled) {
-      lastAppliedScheduleState.current = null;
-      return;
-    }
 
-    if (device.status === "offline" || device.online === false || !isAlive) {
-      return; // ✅ jangan apply schedule ke device yang dead
-    }
-
-    const desiredState = isScheduleActive;
-    if (lastAppliedScheduleState.current === desiredState) {
-      return;
-    }
-
-    if (isTogglingPower || isMonitoringEnabled === desiredState) {
-      lastAppliedScheduleState.current = desiredState;
-      return;
-    }
-
-    const applySchedule = async () => {
-      setIsTogglingPower(true);
-      try {
-        await setDevicePowered(device.id, desiredState);
-        recordUserActivity({
-          title: desiredState ? "Schedule turned on device" : "Schedule turned off device",
-          device: device.name,
-          severity: desiredState ? "success" : "warning",
-        });
-        lastAppliedScheduleState.current = desiredState;
-      } catch (error) {
-        console.error("Failed to apply schedule automation:", error);
-      } finally {
-        setIsTogglingPower(false);
-      }
-    };
-
-    void applySchedule();
-  }, [device, isScheduleActive, isMonitoringEnabled, isTogglingPower, scheduleEnabled]);
-
+  console.log("DEBUG:", {
+  monitoring: device?.monitoring,
+  config_monitoring: device?.config?.monitoring,
+  laser_on: device?.laser_on,
+  laserOn: device?.laserOn,
+  config_laser_on: device?.config?.laser_on,
+  isMonitoringEnabled,
+  effectiveMonitoringEnabled,
+});
   // ── Loading / not found ───────────────────────────────────────────────
   if (loading && !device) {
     return (
@@ -263,7 +312,7 @@ export function DeviceDetailPage() {
     );
   }
 
-  if (!device || !isOwner) {
+  if (!device || (!isOwner && !isSharedUser)) {
     return (
       <div className="min-h-dvh bg-background flex items-center justify-center text-muted-foreground">
         Device not found.
@@ -303,20 +352,28 @@ export function DeviceDetailPage() {
               </p>
             </div>
             <div
-              className={`px-3 py-1.5 rounded-lg text-sm self-start shrink-0 ${
-                effectiveOnline
-                  ? "bg-status-offline/20 text-status-offline"
-                  : "bg-status-safe/20 text-status-safe"
+              className={`px-3 py-1.5 rounded-lg border text-sm self-start shrink-0 ${
+              !effectiveOnline
+                ? isOfflineByTimeout
+                    ? "bg-muted/40 text-muted-foreground"        // NO SIGNAL → abu
+                  : "bg-status-offline/20 text-status-warning"  // OFFLINE → kuning
+                : effectiveMonitoringEnabled
+                ? "bg-status-safe/20 text-status-safe"          // ONLINE → hijau
+                : "bg-status-warning/20 text-status-warning"    // INACTIVE → kuning
               }`}
             >
-              {!effectiveOnline ? (
+              {effectiveOnline ? (
                 <div className="flex items-center gap-1.5">
                   <motion.div
-                    animate={{ opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="w-2 h-2 rounded-full bg-status-safe"
-                  />
-                  ONLINE
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className={`w-2 h-2 rounded-full ${
+                      effectiveMonitoringEnabled
+                          ? "bg-status-safe"
+                          : "bg-status-warning"
+                  }`}
+                />
+                  {effectiveMonitoringEnabled ? "ONLINE" : "OFFLINE"}
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5">
@@ -331,12 +388,14 @@ export function DeviceDetailPage() {
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`rounded-2xl border p-4 sm:p-6 ${
-              !effectiveOnline
-            ? "bg-status-warning/10 border-status-warning/30"
-            : effectiveMonitoringEnabled
-            ? "bg-status-safe/5 border-status-safe/30"
-            : "bg-card border-border"
+            className={`rounded-2xl border p-4 sm:p-6 transition-colors duration-300 ${
+              !effectiveOnline && isOfflineByTimeout
+              ? "bg-muted/30 border-muted-foreground/20"         // NO SIGNAL — abu
+              : !effectiveOnline
+              ? "bg-status-offline/10 border-status-warning/30"  // OFFLINE — kuning
+              : effectiveMonitoringEnabled
+              ? "bg-status-safe/5 border-status-safe/30"         // ON — hijau
+              : "bg-card border-border"                          // OFF — default
             }`}
           >
             <div className="flex items-center gap-4">
@@ -349,38 +408,38 @@ export function DeviceDetailPage() {
                     : "bg-muted"
                 }`}
               >
-                {device.status === "offline" || !effectiveOnline ? (
-                  <WifiOff className="w-7 h-7 text-status-offline" />
+                {!effectiveOnline ? (
+                <WifiOff className={`w-7 h-7 ${
+                  isOfflineByTimeout ? "text-muted-foreground" : "text-status-offline"
+                }`} />
                 ) : (
-                  <Shield
-                    className={`w-7 h-7 ${
-                      effectiveMonitoringEnabled
-                        ? "text-status-safe"
-                        : "text-muted-foreground"
-                    }`}
-                  />
+                <Shield className={`w-7 h-7 ${
+                  effectiveMonitoringEnabled ? "text-status-safe" : "text-muted-foreground"
+                }`} />
                 )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-lg font-medium">
-                  {device.status === "offline" || !effectiveOnline
-                    ? "Device Offline"
-                    : effectiveMonitoringEnabled
-                    ? "Device Active"
-                    : "Device Inactive"}
+                  {!effectiveOnline
+                  ? isOfflineByTimeout ? "No Signal" : "Device Offline"
+                  : effectiveMonitoringEnabled
+                  ? "Device Active"
+                  : "Device Inactive"}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {device.info?.device_type ?? device.deviceType ?? device.name}
                 </p>
               </div>
-              {device.status === "online" && (
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground shrink-0">
-                  <Wifi className="w-4 h-4 text-status-safe" />
-                  <span>
-                    {Math.max(0, Math.min(100, 100 + (device.rssi ?? -90)))}%
-                  </span>
-                </div>
-              )}
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground shrink-0">
+              {!effectiveOnline ? (
+                <Wifi className="w-4 h-4 text-muted-foreground opacity-30" />
+                ) : (
+                <Wifi className="w-4 h-4 text-status-safe" />
+                )}
+                <span className={!effectiveOnline ? "opacity-30" : ""}>
+                  {Math.max(0, Math.min(100, 100 + (device.rssi ?? -90)))}%
+                </span>
+              </div>
             </div>
           </motion.div>
 
@@ -450,6 +509,81 @@ export function DeviceDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* ── Share Device ──────────────────────────────────────────────── */}
+{isOwner && (
+  <div className="bg-card border border-border rounded-2xl p-4 sm:p-6">
+    <h3 className="text-lg mb-1">Share Device</h3>
+    <p className="text-sm text-muted-foreground mb-4">
+      Tambahkan user lain untuk mengakses device ini.
+    </p>
+
+    <div className="flex gap-2 mb-4">
+      <input
+        type="email"
+        placeholder="Email user..."
+        value={shareEmail}
+        onChange={(e) => {
+          setShareEmail(e.target.value);
+          setShareError(null);
+          setShareSuccess(null);
+        }}
+        className="flex-1 bg-background/80 text-foreground border border-border rounded-xl px-4 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+      />
+      <button
+        onClick={handleShareDevice}
+        disabled={shareLoading || !shareEmail.trim()}
+        className="px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm hover:bg-primary/90 transition-all disabled:opacity-50"
+      >
+        {shareLoading ? "..." : "Tambah"}
+      </button>
+    </div>
+
+    {shareError && (
+      <p className="text-sm text-destructive mb-3">{shareError}</p>
+    )}
+    {shareSuccess && (
+      <p className="text-sm text-status-safe mb-3">{shareSuccess}</p>
+    )}
+
+    {(device.sharedWith ?? []).length > 0 ? (
+      <div className="space-y-0 divide-y divide-border border border-border rounded-xl overflow-hidden">
+        {(device.sharedWith ?? []).map((uid) => {
+          const userDetail = sharedUserDetails[uid];
+          return (
+            <div
+              key={uid}
+              className="flex items-center justify-between gap-4 px-4 py-3"
+            >
+              <div className="min-w-0">
+                <p className="text-sm truncate">
+                  {userDetail?.displayName || userDetail?.email || uid}
+                </p>
+                {userDetail?.displayName && (
+                  <p className="text-xs text-muted-foreground truncate">
+                    {userDetail.email}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={() => handleRemoveSharedUser(uid)}
+                disabled={removingUid === uid}
+                className="text-sm text-destructive hover:text-destructive/80 transition-colors shrink-0 disabled:opacity-50"
+              >
+                {removingUid === uid ? "..." : "Hapus"}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    ) : (
+      <p className="text-sm text-muted-foreground text-center py-3 border border-border rounded-xl">
+        Belum ada user yang ditambahkan.
+      </p>
+    )}
+  </div>
+)}
+
 
           {/* ── Schedule Automation ────────────────────────────────────── */}
           <div className="bg-card border border-border rounded-2xl p-4 sm:p-6">

@@ -5,6 +5,7 @@ import {
     update,
     remove,
     push,
+    get,
 } from "firebase/database";
 
 import { database } from "../firebase/config";
@@ -17,20 +18,31 @@ const alertCooldownMap = new Map<string, number>();
 
 const ALERT_COOLDOWN_MS = 10_000;
 
-const toTimestampMillis = (
-    value: unknown
-): number | undefined => {
+const normalizePossibleTimezoneShift = (timestampMs: number): number => {
+    const now = Date.now();
+    const toleranceMs = 5 * 60 * 1000;
 
-    if (
-        typeof value !== "number" ||
-        Number.isNaN(value)
-    ) {
+    if (timestampMs <= now + toleranceMs) {
+        return timestampMs;
+    }
+
+    const offsetMs = new Date(timestampMs).getTimezoneOffset() * 60 * 1000;
+    const corrected = timestampMs + offsetMs;
+
+    return corrected <= now + toleranceMs ? corrected : timestampMs;
+};
+
+const toTimestampMillis = (value: unknown): number | undefined => {
+    if (typeof value !== "number" || Number.isNaN(value)) {
         return undefined;
     }
 
-    return value < 1_000_000_000_000
-        ? value * 1000
-        : value;
+    const timestampMs =
+        value < 1_000_000_000_000
+            ? value * 1000
+            : value;
+
+    return normalizePossibleTimezoneShift(timestampMs);
 };
 
 export const clearAlertsForDevices = async (deviceIds: string[]): Promise<void> => {
@@ -197,49 +209,33 @@ export const persistBlockedSensorAlert =
         suppressAlertsUntil?: number
     ) => {
 
-        if (!database) {
-            return;
-        }
+        if (!database) return;
+        if (sensor.laser !== "BLOCKED") return;
 
-        if (sensor.laser !== "BLOCKED") {
-            return;
-        }
+        // ← Baca laser_on langsung dari Firebase, jangan percaya parameter
+        const deviceSnap = await get(ref(database, `devices/${deviceId}`));
+        const deviceData = deviceSnap.val() as Record<string, unknown> | null;
+        const freshLaserOn =
+            (deviceData?.laser_on as boolean | undefined) ??
+            ((deviceData?.config as Record<string, unknown> | undefined)?.laser_on as boolean | undefined) ??
+            laserOn; // fallback ke parameter kalau Firebase tidak ada
 
-        // ← Gate 1: laser dimatikan user → skip
-        if (!laserOn) return;
+        if (!freshLaserOn) return;
 
-        // ← Gate 2: masih dalam suppress window → skip
-        if (suppressAlertsUntil && Date.now() < suppressAlertsUntil) return;
+        // ← Baca suppressAlertsUntil langsung dari Firebase juga
+        const suppressSnap = await get(ref(database, `devices/${deviceId}/config/suppressAlertsUntil`));
+        const freshSuppress = (suppressSnap.val() as number | null) ?? suppressAlertsUntil ?? 0;
+        if (Date.now() < freshSuppress) return;
 
         const now = Date.now();
+        const lastAlert = alertCooldownMap.get(deviceId) || 0;
+        if (now - lastAlert < ALERT_COOLDOWN_MS) return;
 
-        const lastAlert =
-            alertCooldownMap.get(deviceId) || 0;
+        alertCooldownMap.set(deviceId, now);
 
-        if (
-            now - lastAlert <
-            ALERT_COOLDOWN_MS
-        ) {
-            return;
-        }
-
-        alertCooldownMap.set(
-            deviceId,
-            now
-        );
-
-        const alert = buildBlockedAlert(
-            deviceId,
-            sensor
-        );
-
-        const alertsRef = ref(
-            database,
-            `devices/${deviceId}/alerts`
-        );
-
+        const alert = buildBlockedAlert(deviceId, sensor);
+        const alertsRef = ref(database, `devices/${deviceId}/alerts`);
         const newAlertRef = push(alertsRef);
-
         await set(newAlertRef, alert);
     };
 
@@ -344,31 +340,28 @@ export const subscribeAlertsForDevices = (
     };
 
     const unsubscribers = deviceIds.map(
-        (deviceId) =>
+    (deviceId) =>
+        subscribeAlert(
+            deviceId,
+            (alertsForDevice) => {
+                // ← Hapus dulu semua alert lama untuk device ini
+                Object.keys(currentAlerts).forEach((alertId) => {
+                    if (currentAlerts[alertId].deviceId === deviceId) {
+                        delete currentAlerts[alertId];
+                    }
+                });
 
-            subscribeAlert(
-                deviceId,
+                // ← Baru tambahkan alert terbaru dari Firebase
+                Object.entries(alertsForDevice).forEach(
+                    ([alertId, alert]) => {
+                        currentAlerts[alertId] = alert;
+                    }
+                );
 
-                (alertsForDevice) => {
-
-                    Object.entries(
-                        alertsForDevice
-                    ).forEach(
-                        ([alertId, alert]) => {
-
-                            currentAlerts[
-                                alertId
-                            ] = alert;
-
-                        }
-                    );
-
-                    emit();
-
-                },
-
-                onError
-            )
+                emit();
+            },
+            onError
+        )
     );
 
     return () => {

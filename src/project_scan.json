@@ -10,7 +10,7 @@
                     "name": "App.tsx",
                     "type": "file",
                     "extension": ".tsx",
-                    "size_mb": 0.0198,
+                    "size_mb": 0.0202,
                     "path": "./app\\App.tsx"
                 },
                 {
@@ -396,21 +396,21 @@
                             "name": "AddDevicePage.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0116,
+                            "size_mb": 0.0131,
                             "path": "./app\\pages\\AddDevicePage.tsx"
                         },
                         {
                             "name": "Dashboard.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0122,
+                            "size_mb": 0.0123,
                             "path": "./app\\pages\\Dashboard.tsx"
                         },
                         {
                             "name": "DeviceDetailPage.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0228,
+                            "size_mb": 0.0248,
                             "path": "./app\\pages\\DeviceDetailPage.tsx"
                         },
                         {
@@ -424,7 +424,7 @@
                             "name": "LoginPage.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0076,
+                            "size_mb": 0.0148,
                             "path": "./app\\pages\\LoginPage.tsx"
                         },
                         {
@@ -452,7 +452,7 @@
                             "name": "RegisterPage.tsx",
                             "type": "file",
                             "extension": ".tsx",
-                            "size_mb": 0.0106,
+                            "size_mb": 0.0107,
                             "path": "./app\\pages\\RegisterPage.tsx"
                         },
                         {
@@ -505,6 +505,13 @@
             "type": "folder",
             "children": [
                 {
+                    "name": "useBackgroundSchedule.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.0009,
+                    "path": "./hooks\\useBackgroundSchedule.ts"
+                },
+                {
                     "name": "useDeviceAlive.ts",
                     "type": "file",
                     "extension": ".ts",
@@ -515,7 +522,7 @@
                     "name": "useFirebaseActivity.ts",
                     "type": "file",
                     "extension": ".ts",
-                    "size_mb": 0.0063,
+                    "size_mb": 0.0068,
                     "path": "./hooks\\useFirebaseActivity.ts"
                 },
                 {
@@ -538,6 +545,13 @@
                     "extension": ".tsx",
                     "size_mb": 0.0033,
                     "path": "./hooks\\usePullToRefresh.tsx"
+                },
+                {
+                    "name": "useScheduleAutomation.ts",
+                    "type": "file",
+                    "extension": ".ts",
+                    "size_mb": 0.0032,
+                    "path": "./hooks\\useScheduleAutomation.ts"
                 },
                 {
                     "name": "useUserAlertPreferences.ts",
@@ -596,28 +610,28 @@
                     "name": "alertService.ts",
                     "type": "file",
                     "extension": ".ts",
-                    "size_mb": 0.0078,
+                    "size_mb": 0.0081,
                     "path": "./services\\alertService.ts"
                 },
                 {
                     "name": "authService.ts",
                     "type": "file",
                     "extension": ".ts",
-                    "size_mb": 0.0021,
+                    "size_mb": 0.0027,
                     "path": "./services\\authService.ts"
                 },
                 {
                     "name": "deviceService.ts",
                     "type": "file",
                     "extension": ".ts",
-                    "size_mb": 0.0115,
+                    "size_mb": 0.012,
                     "path": "./services\\deviceService.ts"
                 },
                 {
                     "name": "fcmService.ts",
                     "type": "file",
                     "extension": ".ts",
-                    "size_mb": 0.0036,
+                    "size_mb": 0.0045,
                     "path": "./services\\fcmService.ts"
                 },
                 {
@@ -712,7 +726,7 @@
                     "name": "device.ts",
                     "type": "file",
                     "extension": ".ts",
-                    "size_mb": 0.0016,
+                    "size_mb": 0.0017,
                     "path": "./types\\device.ts"
                 },
                 {

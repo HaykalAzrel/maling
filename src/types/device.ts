@@ -50,6 +50,7 @@ export interface Device {
     name: string;
     location: string;
     ownerId?: string;
+    sharedWith?: string[];
     status: "online" | "offline";
     monitoring?: boolean;
     threshold?: number;
@@ -69,6 +70,7 @@ export interface Device {
     uptimeSec?: number;
     online?: boolean;
     laserOn?: boolean;
+    laser_on?: boolean;
     schedule?: DeviceSchedulePayload;
     config?: DeviceConfigPayload;
     sensor?: DeviceSensorPayload;

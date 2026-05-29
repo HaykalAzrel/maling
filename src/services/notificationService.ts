@@ -3,18 +3,35 @@ import { PushNotifications } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
 import { ref, update, remove } from 'firebase/database';
 import { database } from '../firebase/config';
+import { Preferences } from "@capacitor/preferences";
+import { Device } from "@capacitor/device";
 
 const ALARM_NOTIFICATION_ID = 1001;
 
 // ✅ Unique key per device untuk FCM token
-const getDeviceTokenKey = (): string => {
-  const platform = Capacitor.getPlatform();
-  let deviceKey = localStorage.getItem('secureSense:deviceKey');
-  if (!deviceKey) {
-    deviceKey = `${platform}_${Math.random().toString(36).slice(2, 10)}`;
-    localStorage.setItem('secureSense:deviceKey', deviceKey);
+// ✅ Stable unique key per device
+export const getDeviceTokenKey = async (): Promise<string> => {
+
+  let { value } = await Preferences.get({
+    key: "secureSense:deviceKey"
+  });
+
+  if (value) {
+    return value;
   }
-  return deviceKey;
+
+  const deviceInfo =
+    await Device.getId();
+
+  value =
+    `android_${deviceInfo.identifier}`;
+
+  await Preferences.set({
+    key: "secureSense:deviceKey",
+    value
+  });
+
+  return value;
 };
 
 // ── Notification Channel ──────────────────────────────────────────────────
@@ -50,47 +67,6 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
   return result === 'granted';
 };
 
-// ── FCM Token Registration ─────────────────────────────────────────────────
-export const registerFCMToken = async (userId: string): Promise<void> => {
-  if (!Capacitor.isNativePlatform()) return;
-  if (!database) return;
-
-  const db = database;
-
-  try {
-    const permission = await PushNotifications.requestPermissions();
-    if (permission.receive !== 'granted') return;
-
-    await PushNotifications.register();
-
-    // ✅ Simpan token ke Firebase saat didapat
-    await PushNotifications.addListener('registration', async (token) => {
-      console.log('FCM Token:', token.value);
-      const deviceKey = getDeviceTokenKey();
-      await update(ref(db, `users/${userId}/fcmTokens`), {
-        [deviceKey]: token.value,
-      });
-    });
-
-    // ✅ Foreground push — sudah ada AlarmToastBridge, cukup log saja
-    await PushNotifications.addListener('pushNotificationReceived', (notification) => {
-      console.log('FCM foreground:', notification);
-    });
-
-    // ✅ Saat user tap notifikasi dari background/closed
-    await PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
-      console.log('FCM tapped:', action.notification.data);
-    });
-
-    PushNotifications.addListener('registrationError', (error) => {
-      console.error('FCM registration error:', error);
-    });
-
-  } catch (error) {
-    console.error('registerFCMToken failed:', error);
-  }
-};
-
 // ✅ Hapus token saat logout agar notif tidak dikirim ke device yang sudah logout
 export const unregisterFCMToken = async (userId: string): Promise<void> => {
   if (!Capacitor.isNativePlatform()) return;
@@ -99,7 +75,7 @@ export const unregisterFCMToken = async (userId: string): Promise<void> => {
   const db = database;
 
   try {
-    const deviceKey = getDeviceTokenKey();
+    const deviceKey = await getDeviceTokenKey();
     await remove(ref(db, `users/${userId}/fcmTokens/${deviceKey}`));
     await PushNotifications.removeAllListeners();
   } catch (error) {

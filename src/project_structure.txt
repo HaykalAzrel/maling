@@ -1,6 +1,6 @@
 📁 /
     📁 app/
-        📄 App.tsx (0.0198 MB)
+        📄 App.tsx (0.0202 MB)
         📁 components/
             📄 BottomNav.tsx (0.0044 MB)
             📁 figma/
@@ -56,15 +56,15 @@
                 📄 utils.ts (0.0002 MB)
         📁 pages/
             📄 ActivityPage.tsx (0.0115 MB)
-            📄 AddDevicePage.tsx (0.0116 MB)
-            📄 Dashboard.tsx (0.0122 MB)
-            📄 DeviceDetailPage.tsx (0.0228 MB)
+            📄 AddDevicePage.tsx (0.0131 MB)
+            📄 Dashboard.tsx (0.0123 MB)
+            📄 DeviceDetailPage.tsx (0.0248 MB)
             📄 DevicesPage.tsx (0.0115 MB)
-            📄 LoginPage.tsx (0.0076 MB)
+            📄 LoginPage.tsx (0.0148 MB)
             📄 NotificationsPage.tsx (0.0106 MB)
             📄 OnboardingScreen.tsx (0.0033 MB)
             📄 ProfilePage.tsx (0.0104 MB)
-            📄 RegisterPage.tsx (0.0106 MB)
+            📄 RegisterPage.tsx (0.0107 MB)
             📄 RingtonePage.tsx (0.0116 MB)
             📄 SplashScreen.tsx (0.0027 MB)
             📄 VibrationPage.tsx (0.0055 MB)
@@ -72,11 +72,13 @@
     📁 firebase/
         📄 config.ts (0.0012 MB)
     📁 hooks/
+        📄 useBackgroundSchedule.ts (0.0009 MB)
         📄 useDeviceAlive.ts (0.001 MB)
-        📄 useFirebaseActivity.ts (0.0063 MB)
+        📄 useFirebaseActivity.ts (0.0068 MB)
         📄 useFirebaseAuth.ts (0.0006 MB)
         📄 useFirebaseDevices.ts (0.0047 MB)
         📄 usePullToRefresh.tsx (0.0033 MB)
+        📄 useScheduleAutomation.ts (0.0032 MB)
         📄 useUserAlertPreferences.ts (0.002 MB)
     📁 imports/
         📁 pasted_text/
@@ -85,10 +87,10 @@
     📄 main.tsx (0.0013 MB)
     📁 services/
         📄 activityHistoryService.ts (0.0033 MB)
-        📄 alertService.ts (0.0078 MB)
-        📄 authService.ts (0.0021 MB)
-        📄 deviceService.ts (0.0115 MB)
-        📄 fcmService.ts (0.0036 MB)
+        📄 alertService.ts (0.0081 MB)
+        📄 authService.ts (0.0027 MB)
+        📄 deviceService.ts (0.012 MB)
+        📄 fcmService.ts (0.0045 MB)
         📄 notificationService.ts (0.0059 MB)
         📄 sensorService.ts (0.0018 MB)
         📄 userPreferencesService.ts (0.0046 MB)
@@ -102,6 +104,6 @@
         📄 theme.css (0.0065 MB)
     📁 types/
         📄 alert.ts (0.0003 MB)
-        📄 device.ts (0.0016 MB)
+        📄 device.ts (0.0017 MB)
         📄 sensor.ts (0.0002 MB)
     📄 vite-env.d.ts (0.0 MB)

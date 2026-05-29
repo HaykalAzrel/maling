@@ -48,7 +48,9 @@ export function RegisterPage() {
 
     try {
       await signUpWithEmail(formData.email, formData.password, formData.fullName);
-      navigate("/dashboard");
+      navigate("/login", {
+        state: { message: "Akun dibuat! Cek email kamu untuk verifikasi sebelum login." }
+      });
     } catch (authError) {
       setError(authError instanceof Error ? authError.message : "Unable to create account.");
     } finally {

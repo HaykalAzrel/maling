@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { QrCode, ClipboardList, ArrowLeft, Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { ClipboardList, ArrowLeft, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useFirebaseAuth } from "../../hooks/useFirebaseAuth";
 import { getDeviceById, upsertDevice } from "../../services/deviceService";
@@ -9,6 +9,8 @@ import { SafeTopSpacer } from "../../hooks/usePullToRefresh";
 import { Clipboard } from "@capacitor/clipboard";
 import { Capacitor } from "@capacitor/core";
 import { useRef } from "react";
+
+// Qrcode icon
 
 type Step = "input" | "naming" | "validating" | "success" | "failed";
 
@@ -219,16 +221,6 @@ export function AddDevicePage() {
                         </>
                         )}
                       </span>
-                    </button>
-
-                    <button
-                      className="flex-1 bg-card border border-border py-3 px-2 rounded-xl hover:bg-accent transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2"
-                    >
-                      <QrCode className="w-5 h-5 shrink-0" />
-                        <span className="text-xs sm:text-sm text-center leading-tight">
-                            <span className="sm:hidden">Scan QR</span>
-                          <span className="hidden sm:inline">Scan QR Code</span>
-                        </span>
                     </button>
                 </div>
 

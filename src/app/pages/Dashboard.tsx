@@ -6,6 +6,7 @@ import { useFirebaseDevices } from "../../hooks/useFirebaseDevices";
 import { useFirebaseAuth } from "../../hooks/useFirebaseAuth";
 import { usePullToRefresh, PullIndicator, SafeTopSpacer } from "../../hooks/usePullToRefresh";
 import { isDeviceAlive } from "../../hooks/useDeviceAlive"; // ✅ import helper
+import { useScheduleAutomation } from "../../hooks/useScheduleAutomation";
 
 const formatLastSeen = (timestamp?: number) => {
   if (!timestamp) return "Unknown";
@@ -22,6 +23,9 @@ const formatLastSeen = (timestamp?: number) => {
 export function Dashboard() {
   const navigate = useNavigate();
   const { devices, loading, refreshDevices } = useFirebaseDevices();
+
+  useScheduleAutomation(devices);
+
   const { user } = useFirebaseAuth();
   const loadingRef = useRef(loading);
 
@@ -190,6 +194,7 @@ export function Dashboard() {
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {visibleDevices.map((device, index) => {
+                const isMonitoring = device.monitoring ?? device.config?.monitoring ?? false;
                 // ✅ Status visual sepenuhnya dari lastSeen, bukan device.status
                 const alive = isDeviceAlive(device);
 
@@ -214,7 +219,7 @@ export function Dashboard() {
                             animate={{ opacity: [0.5, 1, 0.5] }}
                             transition={{ duration: 2, repeat: Infinity }}
                             className={`w-2 h-2 rounded-full ${
-                              !alive ? "bg-status-offline" : "bg-status-safe"
+                              !alive ? "bg-status-offline" : isMonitoring ? "bg-status-safe" : "bg-status-warning"
                             }`}
                           />
                         </div>
@@ -229,10 +234,12 @@ export function Dashboard() {
                           className={`text-sm px-2 py-1 rounded-lg inline-flex ${
                             !alive
                               ? "bg-status-offline/20 text-status-offline"
-                              : "bg-status-safe/20 text-status-safe"
+                              : device.monitoring
+                              ? "bg-status-safe/20 text-status-safe"
+                              : "bg-status-warning/20 text-status-warning"
                           }`}
                         >
-                          {alive ? "ONLINE" : "NO SIGNAL"}
+                          {!alive ? "NO SIGNAL" : isMonitoring ? "ONLINE" : "OFFLINE"}
                         </div>
                       </div>
                     </div>
@@ -244,7 +251,7 @@ export function Dashboard() {
                           {device.deviceType ?? device.name}
                         </span>
                       </span>
-                      <span>{device.monitoring ? "Device active" : "Device inactive"}</span>
+                      <span>{device.monitoring ? "Device active" : "Device offline"}</span>
                     </div>
 
                     <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-muted-foreground">

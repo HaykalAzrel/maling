@@ -1,10 +1,10 @@
 import { FormEvent, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { Shield, Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { motion } from "motion/react";
 import { GoogleAuth } from "@codetrix-studio/capacitor-google-auth";
 import { auth } from "../../firebase/config";
-import { GoogleAuthProvider, signInWithCredential, signInWithPopup } from "firebase/auth";
+import { GoogleAuthProvider, signInWithCredential, signInWithPopup, sendPasswordResetEmail, signOut, sendEmailVerification, signInWithEmailAndPassword} from "firebase/auth";
 import { signInWithEmail } from "../../services/authService";
 import { Capacitor } from "@capacitor/core";
 
@@ -15,6 +15,63 @@ export function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetSent, setResetSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState("");
+  const [showResendVerification, setShowResendVerification] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
+
+  const registrationMessage = (location.state as { message?: string })?.message;
+
+  const getFriendlyError = (err: unknown): string => {
+    const code = (err as { code?: string }).code ?? "";
+    if (code === "auth/user-not-found")      return "Email tidak terdaftar.";
+    if (code === "auth/invalid-email")       return "Format email tidak valid.";
+    if (code === "auth/too-many-requests")   return "Terlalu banyak percobaan. Coba lagi nanti.";
+    if (code === "auth/network-request-failed") return "Tidak ada koneksi internet.";
+    if (code === "auth/invalid-credential")  return "Email tidak valid atau tidak terdaftar.";
+    return err instanceof Error ? err.message : "Gagal kirim email reset.";
+  };
+
+  const handleResendVerification = async () => {
+    setResendLoading(true);
+    try {
+      // Login sementara untuk dapat user object
+      const firebaseAuth = auth!;
+      const credential = await signInWithEmailAndPassword(firebaseAuth, email, password);
+      await sendEmailVerification(credential.user);
+      await signOut(firebaseAuth); // logout lagi setelahnya
+      setResendSent(true);
+    } catch {
+      setError("Gagal kirim ulang. Coba lagi.");
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!resetEmail.trim()) {
+        setResetError("Masukkan email kamu.");
+        return;
+    }
+
+    setResetError("");
+    setResetLoading(true);
+
+    try {
+        if (!auth) throw new Error("Auth not initialized");
+        await sendPasswordResetEmail(auth, resetEmail.trim());
+        setResetSent(true);
+    } catch (err) {
+        setResetError(getFriendlyError(err)); // ← pakai getFriendlyError
+    } finally {
+        setResetLoading(false);
+    }
+  };
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -31,9 +88,13 @@ export function LoginPage() {
       await signInWithEmail(email, password);
       navigate("/dashboard");
     } catch (authError) {
-      setError(authError instanceof Error ? authError.message : "Unable to sign in.");
-      setLoading(false);
-    } finally {
+      const code = (authError as { code?: string }).code ?? "";
+      if (code === "auth/email-not-verified") {
+        setShowResendVerification(true); // tampilkan opsi kirim ulang
+        setError("Email belum diverifikasi. Cek inbox kamu.");
+      } else {
+        setError(authError instanceof Error ? authError.message : "Unable to sign in.");
+      }
       setLoading(false);
     }
   };
@@ -92,9 +153,32 @@ export function LoginPage() {
         </div>
 
         <form onSubmit={handleLogin} className="space-y-5">
+          {registrationMessage && (
+            <div className="rounded-xl border border-status-safe/30 bg-status-safe/10 px-4 py-3 text-sm text-status-safe">
+              {registrationMessage}
+            </div>
+          )}
+
           {error && (
             <div className="rounded-xl border border-status-alert/30 bg-status-alert/10 px-4 py-3 text-sm text-status-alert">
               {error}
+            </div>
+          )}
+
+          {showResendVerification && !resendSent && (
+            <button
+              type="button"
+              onClick={() => void handleResendVerification()}
+              disabled={resendLoading}
+              className="w-full text-sm text-primary border border-primary/30 rounded-xl py-2.5 hover:bg-primary/10 transition-all disabled:opacity-70"
+            >
+              {resendLoading ? "Mengirim..." : "Kirim ulang email verifikasi"}
+            </button>
+          )}
+
+          {resendSent && (
+            <div className="rounded-xl border border-status-safe/30 bg-status-safe/10 px-4 py-3 text-sm text-status-safe">
+              Email verifikasi sudah dikirim ulang. Cek inbox kamu.
             </div>
           )}
 
@@ -136,7 +220,16 @@ export function LoginPage() {
           </div>
 
           <div className="text-right">
-            <button type="button" className="text-sm text-primary hover:underline">
+            <button
+              type="button"
+              onClick={() => {
+                setResetEmail(email); // ← pre-fill dari input email
+                setResetSent(false);
+                setResetError("");
+                setShowForgotPassword(true);
+              }}
+              className="text-sm text-primary hover:underline"
+            >
               Forgot password?
             </button>
           </div>
@@ -189,6 +282,79 @@ export function LoginPage() {
             </button>
           </p>
         </form>
+        {/* ── Forgot Password Modal ─────────────────────────────── */}
+        {showForgotPassword && (
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm"
+                onClick={() => setShowForgotPassword(false)}
+            >
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    className="w-full max-w-sm bg-card border border-border rounded-2xl p-6 space-y-4"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="space-y-1">
+                      <h3 className="text-lg">Reset Password</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Masukkan email kamu dan kami akan kirim link reset password.
+                      </p>
+                  </div>
+
+                    {resetSent ? (
+                      <div className="space-y-4">
+                        <div className="rounded-xl border border-status-safe/30 bg-status-safe/10 px-4 py-3 text-sm text-status-safe">
+                          Email reset sudah dikirim ke <strong>{resetEmail}</strong>. Cek inbox kamu.
+                      </div>
+                      <button
+                        onClick={() => setShowForgotPassword(false)}
+                        className="w-full bg-primary text-primary-foreground py-3 rounded-xl hover:bg-primary/90 transition-all"
+                      >
+                        Tutup
+                      </button>
+                    </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {resetError && (
+                          <div className="rounded-xl border border-status-alert/30 bg-status-alert/10 px-4 py-3 text-sm text-status-alert">
+                            {resetError}
+                          </div>
+                        )}
+
+                    <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+                        <input
+                            type="email"
+                            value={resetEmail}
+                            onChange={(e) => setResetEmail(e.target.value)}
+                            placeholder="your@email.com"
+                            className={inputClass}
+                            onKeyDown={(e) => e.key === "Enter" && void handleForgotPassword()}
+                        />
+                    </div>
+
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => setShowForgotPassword(false)}
+                            className="flex-1 py-3 rounded-xl border border-border hover:bg-accent transition-all text-sm"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            onClick={() => void handleForgotPassword()}
+                            disabled={resetLoading}
+                            className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-sm disabled:opacity-70"
+                        >
+                            {resetLoading ? "Mengirim..." : "Kirim Email"}
+                        </button>
+                    </div>
+                </div>
+                )}
+                </motion.div>
+        </motion.div>
+        )}
       </motion.div>
     </div>
   );

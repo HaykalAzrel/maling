@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "../firebase/config";
+import { auth, database } from "../firebase/config";
+import { ref, update } from "firebase/database";
 
 export function useFirebaseAuth() {
   const [user, setUser] = useState<User | null>(auth?.currentUser ?? null);
@@ -12,9 +13,26 @@ export function useFirebaseAuth() {
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
       setUser(nextUser);
       setLoading(false);
+
+      // Simpan/update data user ke /users saat login
+      if (nextUser && database) {
+        await update(
+          ref(
+            database,
+            `users/${nextUser.uid}`
+          ),
+          {
+            uid: nextUser.uid,
+            email: nextUser.email,
+            displayName:
+              nextUser.displayName ?? null,
+          }
+        );
+
+      }
     });
 
     return unsubscribe;
