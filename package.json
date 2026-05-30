@@ -11,7 +11,7 @@
     "cap:prepare": "bun run build:web && bunx cap sync",
     "cap:sync": "bunx cap sync",
     "cap:copy": "bunx cap copy",
-    "cap:android": "bunx cap open android",
+    "cap:android": "node scripts/cap-open-android.mjs",
     "cap:ios": "bunx cap open ios"
   },
   "dependencies": {
