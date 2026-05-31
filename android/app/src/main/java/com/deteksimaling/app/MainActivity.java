@@ -1,5 +1,6 @@
 package com.deteksimaling.app;
 
+import android.content.Intent;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -8,6 +9,7 @@ import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.provider.Settings;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -23,13 +25,26 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(
             Bundle savedInstanceState) {
 
-        registerPlugin(
-                GoogleAuth.class);
-        registerPlugin(
-                SecuroLoggerPlugin.class);
+        registerPlugin(GoogleAuth.class);
+        registerPlugin(SecuroLoggerPlugin.class);
+        registerPlugin(AlarmLauncherPlugin.class);
+        registerPlugin(FileWriterPlugin.class);
 
         super.onCreate(
                 savedInstanceState);
+
+        if (Build.VERSION.SDK_INT >= 34) {
+                NotificationManager nm = getSystemService(NotificationManager.class);
+                if (nm != null && !nm.canUseFullScreenIntent()) {
+                        try {
+                                Intent intent = new Intent("android.settings.MANAGE_APP_USE_FULL_SCREEN_INTENTS");
+                                intent.setData(Uri.parse("package:" + getPackageName()));
+                                startActivity(intent);
+                        } catch (Exception e) {
+                                Log.d("Securo", "Cannot open full screen intent settings: " + e.getMessage());
+                        }
+                }
+        }
 
         createNotificationChannels();
 
@@ -65,6 +80,11 @@ public class MainActivity extends BridgeActivity {
         Log.d(
                 "Securo",
                 "MainActivity created");
+    }
+
+    @Override
+    public void onBackPressed() {
+            moveTaskToBack(true); // ← tambahkan method ini
     }
 
     private void createNotificationChannels() {

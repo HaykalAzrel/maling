@@ -46,6 +46,7 @@ class AlarmFCMService : FirebaseMessagingService() {
         }
     }
 
+
     private fun showFullScreenAlarm(deviceName: String, timeStr: String, deviceId: String) {
         // Intent untuk fullscreen activity
         val fullScreenIntent = Intent(this, AlarmFullScreenActivity::class.java).apply {

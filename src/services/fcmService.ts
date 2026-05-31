@@ -4,6 +4,7 @@ import { PushNotifications } from "@capacitor/push-notifications";
 import { ref, set, remove, get } from "firebase/database";
 import { firebaseApp, database } from "../firebase/config";
 import { nativeLog } from "./nativeLogger";
+import { openAlarmFullscreen } from "./alarmLauncher";
 
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY as string | undefined;
 
@@ -100,6 +101,17 @@ const registerNativePush = async (userId: string): Promise<void> => {
     await PushNotifications.addListener("pushNotificationReceived", (notification) => {
         const data = notification.data as Record<string, string> | undefined;
         if (data?.type === "alarm" && data?.deviceId) {
+            const deviceName = data.deviceName ?? "Unknown Device";
+            const time = data.timeStr ?? "";
+            console.debug("Securo FCM alarm received:", {
+                deviceId: data.deviceId,
+                deviceName,
+                time,
+            });
+            void nativeLog(
+                `FCM alarm received deviceId=${data.deviceId} deviceName=${deviceName} time=${time}`
+            );
+            void openAlarmFullscreen(deviceName, time);
             window.dispatchEvent(new CustomEvent("fcm-alert", { detail: data }));
         }
     });

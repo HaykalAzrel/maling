@@ -70,53 +70,57 @@ class AlarmFullScreenActivity : AppCompatActivity() {
     }
 
     private fun startAlarm() {
-        // Suara alarm
-        try {
-            Log.d(
-                "Securo",
-                "Alarm audio start"
-            )
-            val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        val soundEnabled = intent.getBooleanExtra("soundEnabled", true)
+        val ringtoneType = intent.getStringExtra("ringtoneType") ?: "preset"
+        val ringtoneName = intent.getStringExtra("ringtoneName") ?: "default"
+        val ringtoneFilePath = intent.getStringExtra("ringtoneFilePath")
+        val vibrationMode = intent.getStringExtra("vibrationMode") ?: "long"
 
-            mediaPlayer = MediaPlayer().apply {
-                setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ALARM)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build()
+        if (soundEnabled) {
+            try {
+                mediaPlayer = MediaPlayer().apply {
+                    setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_ALARM)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build()
+                    )
+
+                    when {
+                        // Custom ringtone dari file
+                        ringtoneType == "custom" && !ringtoneFilePath.isNullOrEmpty() -> {
+                            setDataSource(ringtoneFilePath)
+                        }
+                        // Preset dari assets
+                        else -> {
+                            val assetFileName = when (ringtoneName.lowercase()) {
+                                "beacon" -> "public/sounds/beacon.mp3"
+                                "siren" -> "public/sounds/siren.mp3"
+                            else -> "public/sounds/default.mp3"
+                            }
+                            val afd = assets.openFd(assetFileName)
+                            setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                        }
+                    }
+
+                    isLooping = true
+                    prepare()
+                    start()
+                }
+
+                val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                audioManager.setStreamVolume(
+                    AudioManager.STREAM_ALARM,
+                    audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM),
+                    0
                 )
-                setDataSource(applicationContext, alarmUri)
-                isLooping = true
-                prepare()
-                start()
+            } catch (e: Exception) {
+                Log.e("Securo", "Alarm audio failed: ${e.message}")
             }
-
-            // Set volume alarm ke max
-            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            audioManager.setStreamVolume(
-                AudioManager.STREAM_ALARM,
-                audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM),
-                0
-            )
-            Log.d(
-                "Securo",
-                "Alarm audio volume set to max"
-            )
-        } catch (e: Exception) {
-            Log.e(
-                "Securo",
-                "Alarm audio start failed: " + e.message
-            )
-            e.printStackTrace()
         }
 
         // Vibrasi
         try {
-            Log.d(
-                "Securo",
-                "Alarm vibration start"
-            )
             vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
                 vm.defaultVibrator
@@ -125,7 +129,13 @@ class AlarmFullScreenActivity : AppCompatActivity() {
                 getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
             }
 
-            val pattern = longArrayOf(0, 200, 100, 200, 100, 400)
+            val pattern = when (vibrationMode) {
+                "short" -> longArrayOf(0, 120, 500)
+                "long" -> longArrayOf(0, 350, 900)
+                "continuous" -> longArrayOf(0, 600, 700)
+                else -> longArrayOf(0, 200, 100, 200, 100, 400)
+            }
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 vibrator?.vibrate(VibrationEffect.createWaveform(pattern, 0))
             } else {
@@ -133,11 +143,7 @@ class AlarmFullScreenActivity : AppCompatActivity() {
                 vibrator?.vibrate(pattern, 0)
             }
         } catch (e: Exception) {
-            Log.e(
-                "Securo",
-                "Alarm vibration failed: " + e.message
-            )
-            e.printStackTrace()
+            Log.e("Securo", "Alarm vibration failed: ${e.message}")
         }
     }
 

@@ -269,11 +269,11 @@ function AlarmToastBridge() {
         description: `${activity.device} • ${activity.time}`,
       });
 
-      if (preferences.pushNotifications && notificationsEnabled) {
-        void showAlarmNotification(activity.title, `${activity.device} • ${activity.time}`, {
-          sound: preferences.soundEnabled,
-        });
-      }
+      //if (preferences.pushNotifications && notificationsEnabled) {
+        //void showAlarmNotification(activity.title, `${activity.device} • ${activity.time}`, {
+          //sound: preferences.soundEnabled,
+        //});
+      //}
 
       triggerAlarm({
         id: activity.id,
@@ -488,6 +488,35 @@ function FCMRegistrar() {
 
     useEffect(() => {
         if (!user?.uid) return;
+        if (!Capacitor.isNativePlatform()) return;
+
+        let subscription: Awaited<ReturnType<typeof CapacitorApp.addListener>> | null = null;
+
+        const setupListener = async () => {
+            subscription = await CapacitorApp.addListener("appStateChange", async ({ isActive }) => {
+                if (!isActive) return;
+                try {
+                    const granted = await requestNotificationPermission();
+                    if (granted) {
+                        void registerFCMToken(user.uid);
+                    }
+                } catch (error) {
+                    console.debug("Securo notification permission recheck failed:", error);
+                }
+            });
+        };
+
+        void setupListener();
+
+        return () => {
+            if (subscription) {
+                void subscription.remove();
+            }
+        };
+    }, [user?.uid]);
+
+    useEffect(() => {
+        if (!user?.uid) return;
         void registerFCMToken(user.uid);
         const unsubscribe = setupForegroundMessaging();
         return () => { unsubscribe?.(); };
@@ -529,7 +558,7 @@ function HardwareBackHandler() {
 
     void CapacitorApp.addListener("backButton", () => {
       if (location.pathname === "/login") {
-        CapacitorApp.exitApp();
+        CapacitorApp.minimizeApp();
         return;
       }
 
@@ -539,7 +568,7 @@ function HardwareBackHandler() {
       }
 
       if (location.pathname === "/dashboard") {
-        CapacitorApp.exitApp();
+        CapacitorApp.minimizeApp();
         return;
       }
 

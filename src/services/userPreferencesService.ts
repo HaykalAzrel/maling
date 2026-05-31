@@ -2,6 +2,7 @@ import { onValue, ref, update } from "firebase/database";
 import { database } from "../firebase/config";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFirebaseAuth } from "../hooks/useFirebaseAuth";
+import { saveCustomRingtone, saveAlarmPrefsNative } from "../services/fileWriter";
 
 export type RingtonePreference = {
   type: "default" | "preset" | "custom";
@@ -117,13 +118,36 @@ export function useUserAlertPreferences() {
     const unsubscribe = subscribeUserAlertPreferences(
       user.uid,
       (next) => {
-        // ✅ Skip Firebase emit saat masih dalam window suppress
         if (Date.now() < suppressUntilRef.current) {
           setLoading(false);
           return;
         }
         setPreferences(next);
         setLoading(false);
+
+        // Sync ke localStorage
+        try {
+          localStorage.setItem("secureSense:alarmPrefs", JSON.stringify({
+            soundEnabled: next.soundEnabled,
+            vibrationMode: next.vibrationMode,
+            ringtoneType: next.ringtone?.type ?? "preset",
+            ringtoneUrl: next.ringtone?.customDataUrl ?? null,
+            ringtoneName: next.ringtone?.name ?? "default",
+        }));
+        } catch { /* ignore */ }
+
+        const ringtonePath = localStorage.getItem("secureSense:customRingtonePath");
+        void saveAlarmPrefsNative({
+          soundEnabled: next.soundEnabled,
+          vibrationMode: next.vibrationMode,
+          ringtoneType: next.ringtone?.type ?? "preset",
+          ringtoneName: next.ringtone?.name ?? "default",
+          ringtoneFilePath: ringtonePath,
+        });
+
+        if (next.ringtone?.type === "custom" && next.ringtone?.customDataUrl) {
+          void saveCustomRingtone(next.ringtone.customDataUrl);
+        }
       },
       () => {
         setPreferences(defaultAlertPreferences);

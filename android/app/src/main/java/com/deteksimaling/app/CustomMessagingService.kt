@@ -188,88 +188,48 @@ class CustomMessagingService :
     }
 
     private fun showFullScreenAlarm(
-        deviceName:String,
-        timeStr:String,
-        deviceId:String
-    ){
-        Log.d(
-            "Securo",
-            "showFullScreenAlarm device=" + deviceName + " time=" + timeStr + " id=" + deviceId
-        )
+    deviceName: String,
+    timeStr: String,
+    deviceId: String
+) {
+    Log.d("Securo", "showFullScreenAlarm device=$deviceName time=$timeStr id=$deviceId")
 
-        val intent =
-            Intent(
-                this,
-                AlarmFullScreenActivity::class.java
-            )
+    // Baca preferensi dari SharedPreferences
+    val prefs = getSharedPreferences("SecuroPrefs", Context.MODE_PRIVATE)
+    val soundEnabled = prefs.getBoolean("soundEnabled", true)
+    val vibrationMode = prefs.getString("vibrationMode", "long") ?: "long"
+    val ringtoneType = prefs.getString("ringtoneType", "preset") ?: "preset"
+    val ringtoneName = prefs.getString("ringtoneName", "default") ?: "default"
+    val ringtoneFilePath = prefs.getString("ringtoneFilePath", "") ?: ""
 
-        intent.flags =
-            Intent.FLAG_ACTIVITY_NEW_TASK or
-            Intent.FLAG_ACTIVITY_CLEAR_TOP
-
-        intent.putExtra(
-            "deviceName",
-            deviceName
-        )
-
-        intent.putExtra(
-            "time",
-            timeStr
-        )
-
-        intent.putExtra(
-            "deviceId",
-            deviceId
-        )
-
-        val pendingIntent =
-            PendingIntent.getActivity(
-                this,
-                0,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or
-                PendingIntent.FLAG_IMMUTABLE
-            )
-
-        val notification =
-            NotificationCompat.Builder(
-                this,
-                "alarm-channel"
-            )
-            .setSmallIcon(
-                R.mipmap.ic_launcher
-            )
-            .setContentTitle(
-                "🚨 SECURITY ALERT"
-            )
-            .setContentText(
-                "$deviceName • $timeStr"
-            )
-            .setPriority(
-                NotificationCompat.PRIORITY_MAX
-            )
-            .setCategory(
-                NotificationCompat.CATEGORY_CALL
-            )
-            .setVisibility(
-                NotificationCompat.VISIBILITY_PUBLIC
-            )
-            .setFullScreenIntent(
-                pendingIntent,
-                true
-            )
-            .setOngoing(true)
-            .setAutoCancel(false)
-            .build()
-
-        val manager =
-            getSystemService(
-                Context.NOTIFICATION_SERVICE
-            ) as NotificationManager
-
-        manager.notify(
-            1001,
-            notification
-        )
+    // Start AlarmForegroundService dengan preferensi
+    val serviceIntent = Intent(this, AlarmForegroundService::class.java).also {
+        it.putExtra("deviceName", deviceName)
+        it.putExtra("time", timeStr)
+        it.putExtra("soundEnabled", soundEnabled)
+        it.putExtra("vibrationMode", vibrationMode)
+        it.putExtra("ringtoneType", ringtoneType)
+        it.putExtra("ringtoneName", ringtoneName)
+        it.putExtra("ringtoneFilePath", ringtoneFilePath)
     }
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        startForegroundService(serviceIntent)
+    } else {
+        startService(serviceIntent)
+    }
+
+    // Start AlarmFullScreenActivity
+    val activityIntent = Intent(this, AlarmFullScreenActivity::class.java).also {
+        it.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        it.putExtra("deviceName", deviceName)
+        it.putExtra("time", timeStr)
+        it.putExtra("soundEnabled", soundEnabled)
+        it.putExtra("vibrationMode", vibrationMode)
+        it.putExtra("ringtoneType", ringtoneType)
+        it.putExtra("ringtoneName", ringtoneName)
+        it.putExtra("ringtoneFilePath", ringtoneFilePath)
+    }
+    startActivity(activityIntent)
+}
 }
